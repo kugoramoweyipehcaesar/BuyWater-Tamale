@@ -12,6 +12,13 @@ export default function SiteHeader({ user }) {
   const onDashboard =
     path === "/dashboard" ||
     (typeof path === "string" && path.startsWith("/dashboard"));
+  const onAllOrders =
+    path === "/all-orders" ||
+    (typeof path === "string" && path.startsWith("/all-orders"));
+
+  const linkClass = onHome
+    ? "text-white/90 hover:text-white"
+    : "text-slate-600 hover:text-[#0077C8] dark:text-zinc-300 dark:hover:text-sky-400";
 
   return (
     <>
@@ -40,9 +47,23 @@ export default function SiteHeader({ user }) {
             </div>
           </Link>
           <nav className="hidden items-center gap-5 md:flex">
-            <a href="/#how-it-works" className={`text-sm font-medium ${onHome ? "text-white/90 hover:text-white" : "text-slate-600 hover:text-[#0077C8] dark:text-zinc-300 dark:hover:text-sky-400"}`}>How It Works</a>
-            <a href="/#features" className={`text-sm font-medium ${onHome ? "text-white/90 hover:text-white" : "text-slate-600 hover:text-[#0077C8] dark:text-zinc-300 dark:hover:text-sky-400"}`}>Features</a>
-            <a href="/#support" className={`text-sm font-medium ${onHome ? "text-white/90 hover:text-white" : "text-slate-600 hover:text-[#0077C8] dark:text-zinc-300 dark:hover:text-sky-400"}`}>Support</a>
+            <a href="/#how-it-works" className={`text-sm font-medium ${linkClass}`}>How It Works</a>
+            <a href="/#features" className={`text-sm font-medium ${linkClass}`}>Features</a>
+            <a href="/#support" className={`text-sm font-medium ${linkClass}`}>Support</a>
+            {user ? (
+              <Link
+                href="/all-orders"
+                className={`text-sm font-medium ${
+                  onAllOrders
+                    ? onHome
+                      ? "text-white font-semibold underline underline-offset-4"
+                      : "text-[#0077C8] font-semibold dark:text-sky-400"
+                    : linkClass
+                }`}
+              >
+                All Orders
+              </Link>
+            ) : null}
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle compact className={onHome ? "!border-white/30 !bg-white/10 !text-white hover:!bg-white/20" : ""} />
@@ -54,6 +75,15 @@ export default function SiteHeader({ user }) {
             )}
             {user ? (
               <>
+                <Link href="/all-orders" className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold md:hidden ${
+                  onAllOrders
+                    ? onHome
+                      ? "bg-white/25 text-white"
+                      : "bg-[#0077C8]/15 text-[#0077C8]"
+                    : onHome
+                      ? "bg-white/15 text-white hover:bg-white/25"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200"
+                }`}>All Orders</Link>
                 <Link href="/dashboard" className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${onHome ? "bg-white/15 text-white hover:bg-white/25" : "bg-[#0077C8]/10 text-[#0077C8] hover:bg-[#0077C8]/20 dark:bg-sky-500/15 dark:text-sky-400"}`}>Order</Link>
                 <Link href="/profile" className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${onHome ? "text-white/90 hover:text-white" : "text-slate-600 hover:text-[#0077C8] dark:text-zinc-300 dark:hover:text-sky-400"}`}><User className="h-3.5 w-3.5" />Profile</Link>
               </>
