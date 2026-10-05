@@ -13,6 +13,8 @@ import {
   Droplets,
   MapPin,
   Phone,
+  CheckCircle2,
+  Smartphone,
 } from "lucide-react";
 
 const LIVE = ["PENDING", "PROCESSING", "CONFIRMED", "ON_THE_WAY"];
@@ -24,6 +26,7 @@ export default function OrderQueuePage() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   const [soundOn, setSoundOn] = useState(true);
+  const [busyId, setBusyId] = useState("");
   const knownIds = useRef(new Set());
   const firstLoad = useRef(true);
   const audioCtx = useRef(null);
@@ -85,17 +88,40 @@ export default function OrderQueuePage() {
   }, [load]);
 
   async function setStatus(id, status) {
+    setBusyId(id);
     try {
       const res = await fetch(`/api/orders/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Failed");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
       showToast("Updated — Live now");
       await load();
     } catch (e) {
       showToast(e.message);
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function confirmPayment(id) {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentConfirmed: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      showToast("Payment confirmed — client track page updated");
+      await load();
+    } catch (e) {
+      showToast(e.message);
+    } finally {
+      setBusyId("");
     }
   }
 
@@ -157,63 +183,110 @@ export default function OrderQueuePage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {orders.map((o, i) => (
-              <div
-                key={o.id}
-                className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
-              >
-                <div className="mb-2 flex items-start justify-between gap-2">
-                  <div>
-                    <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0077C8] text-xs font-bold text-white">
-                      {i + 1}
+            {orders.map((o, i) => {
+              const isMomo = String(o.paymentMethod || "")
+                .toLowerCase()
+                .includes("momo");
+              const needsPaymentConfirm = isMomo && !o.paymentConfirmed;
+              return (
+                <div
+                  key={o.id}
+                  className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
+                >
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div>
+                      <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0077C8] text-xs font-bold text-white">
+                        {i + 1}
+                      </span>
+                      <span className="font-bold text-[#0B2545]">{o.orderNumber}</span>
+                    </div>
+                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                      {o.status}
                     </span>
-                    <span className="font-bold text-[#0B2545]">{o.orderNumber}</span>
                   </div>
-                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                    {o.status}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-[#0B2545]">{o.customerName}</p>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <Phone className="h-3 w-3" /> {o.phone}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {o.hostel || o.address}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Droplets className="h-3 w-3" /> {o.gallons} gal
-                  </span>
-                  <span className="font-semibold text-[#0077C8]">
-                    Ghc{Number(o.totalAmount).toFixed(2)}
-                  </span>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {LIVE.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      disabled={o.status === s}
-                      onClick={() => setStatus(o.id, s)}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold ${
-                        o.status === s
-                          ? "bg-[#0077C8] text-white"
-                          : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  <p className="text-sm font-medium text-[#0B2545]">{o.customerName}</p>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="h-3 w-3" /> {o.phone}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {o.hostel || o.address}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Droplets className="h-3 w-3" /> {o.gallons} gal
+                    </span>
+                    <span className="font-semibold text-[#0077C8]">
+                      Ghc{Number(o.totalAmount).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {isMomo && (
+                    <div
+                      className={`mt-2 rounded-lg px-3 py-2 text-xs ${
+                        needsPaymentConfirm
+                          ? "border border-amber-200 bg-amber-50 text-amber-900"
+                          : "border border-green-200 bg-green-50 text-green-800"
                       }`}
                     >
-                      {s.replace(/_/g, " ")}
+                      <p className="inline-flex items-center gap-1 font-semibold">
+                        <Smartphone className="h-3.5 w-3.5" />
+                        Mobile Money
+                        {needsPaymentConfirm
+                          ? " · Pending payment confirmation"
+                          : " · Payment confirmed"}
+                      </p>
+                      <p className="mt-0.5">
+                        Phone used: <strong>{o.momoNumber || "—"}</strong>
+                        {" · "}
+                        Ref: <strong>{o.momoReference || "—"}</strong>
+                      </p>
+                    </div>
+                  )}
+
+                  {needsPaymentConfirm && (
+                    <button
+                      type="button"
+                      disabled={busyId === o.id}
+                      onClick={() => confirmPayment(o.id)}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-60"
+                    >
+                      {busyId === o.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4" />
+                      )}
+                      Confirm payment received
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setStatus(o.id, "DELIVERED")}
-                    className="rounded-lg bg-green-600 px-2.5 py-1 text-[11px] font-semibold text-white"
-                  >
-                    DELIVERED
-                  </button>
+                  )}
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {LIVE.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={o.status === s || busyId === o.id}
+                        onClick={() => setStatus(o.id, s)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold ${
+                          o.status === s
+                            ? "bg-[#0077C8] text-white"
+                            : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {s.replace(/_/g, " ")}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={busyId === o.id}
+                      onClick={() => setStatus(o.id, "DELIVERED")}
+                      className="rounded-lg bg-green-600 px-2.5 py-1 text-[11px] font-semibold text-white"
+                    >
+                      DELIVERED
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
