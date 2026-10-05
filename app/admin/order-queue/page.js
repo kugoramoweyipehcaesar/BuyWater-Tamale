@@ -19,6 +19,14 @@ import {
 
 const LIVE = ["PENDING", "PROCESSING", "CONFIRMED", "ON_THE_WAY"];
 
+function needsMomoConfirm(o) {
+  const isMomo = String(o.paymentMethod || "").toLowerCase().includes("momo");
+  if (!isMomo) return false;
+  if (o.paymentConfirmed === true) return false;
+  if (o.paymentConfirmed === false) return true;
+  return String(o.notes || "").includes("PAYMENT_PENDING");
+}
+
 export default function OrderQueuePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -187,7 +195,7 @@ export default function OrderQueuePage() {
               const isMomo = String(o.paymentMethod || "")
                 .toLowerCase()
                 .includes("momo");
-              const needsPaymentConfirm = isMomo && !o.paymentConfirmed;
+              const needsPaymentConfirm = needsMomoConfirm(o);
               return (
                 <div
                   key={o.id}
