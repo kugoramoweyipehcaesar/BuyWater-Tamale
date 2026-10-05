@@ -41,35 +41,34 @@ model Product {
 }
 
 model Order {
-  id               String   @id @default(cuid())
-  orderNumber      String   @unique
-  customerName     String
-  username         String?
-  phone            String
-  email            String?
-  address          String
-  hostel           String?
-  customHostel     String?
-  roomNumber       String?
-  blockNumber      String?
-  products         String   // JSON string of items
-  gallons          Int      @default(1)
-  totalAmount      Float
-  paymentMethod    String   @default("cash_on_delivery")
-  momoNumber       String?
-  momoReference    String?
-  paymentConfirmed Boolean  @default(false)
-  status           String   @default("PENDING") // PENDING, PROCESSING, CONFIRMED, ON_THE_WAY, DELIVERED, CANCELLED
-  isSubscription   Boolean  @default(false)
-  notes            String?
-  deliveryNotes    String?
-  cancelReason     String?
-  driverName       String?
-  driverPhone      String?
-  userId           String?
-  user             User?    @relation(fields: [userId], references: [id])
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id            String   @id @default(cuid())
+  orderNumber   String   @unique
+  customerName  String
+  username      String?
+  phone         String
+  email         String?
+  address       String
+  hostel        String?
+  customHostel  String?
+  roomNumber    String?
+  blockNumber   String?
+  products      String   // JSON string of items
+  gallons       Int      @default(1)
+  totalAmount   Float
+  paymentMethod String   @default("cash_on_delivery")
+  momoNumber    String?
+  momoReference String?
+  status        String   @default("PENDING") // PENDING, PROCESSING, CONFIRMED, ON_THE_WAY, DELIVERED, CANCELLED
+  isSubscription Boolean @default(false)
+  notes         String?
+  deliveryNotes String?
+  cancelReason  String?
+  driverName    String?
+  driverPhone   String?
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Hostel {
