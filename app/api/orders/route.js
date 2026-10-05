@@ -97,6 +97,18 @@ export async function POST(request) {
           { status: 400 }
         );
       }
+      if (!String(body.momoNumber || "").trim()) {
+        return NextResponse.json(
+          { error: "Enter the phone number used for MoMo payment" },
+          { status: 400 }
+        );
+      }
+      if (!String(body.momoReference || "").trim()) {
+        return NextResponse.json(
+          { error: "Enter the MoMo transaction reference" },
+          { status: 400 }
+        );
+      }
     }
 
     try {
@@ -122,6 +134,8 @@ export async function POST(request) {
       notes = `Promo: ${String(promoCode).toUpperCase()}${notes ? " — " + notes : ""}`;
     }
 
+    const isMomo = String(body.paymentMethod || "").toLowerCase().includes("momo");
+
     const order = await prisma.order.create({
       data: {
         orderNumber: body.orderNumber || genOrderNumber(),
@@ -144,6 +158,7 @@ export async function POST(request) {
         paymentMethod: body.paymentMethod || "cash_on_delivery",
         momoNumber: body.momoNumber || "",
         momoReference: body.momoReference || "",
+        paymentConfirmed: !isMomo,
         status: "PENDING",
         isSubscription: !!body.isSubscription,
         notes,
@@ -152,7 +167,6 @@ export async function POST(request) {
       },
     });
 
-    // Always increment promo usage server-side when promo is applied
     let promoUpdated = null;
     if (promoId && user?.id) {
       try {
@@ -172,7 +186,7 @@ export async function POST(request) {
       userId: user?.id || null,
       email: order.email || user?.email || null,
       action: "ORDER_CREATED",
-      details: `Order ${order.orderNumber} — ${order.gallons} gal · Ghc${Number(order.totalAmount).toFixed(2)}${order.hostel ? ` · ${order.hostel}` : ""}${promoUpdated ? ` · promo ${promoUpdated.code} ${promoUpdated.timesUsed}/${promoUpdated.maxUses}` : ""}`,
+      details: `Order ${order.orderNumber} — ${order.gallons} gal · Ghc${Number(order.totalAmount).toFixed(2)}${order.hostel ? ` · ${order.hostel}` : ""}${isMomo ? ` · MoMo ${order.momoNumber} ref ${order.momoReference}` : ""}${promoUpdated ? ` · promo ${promoUpdated.code} ${promoUpdated.timesUsed}/${promoUpdated.maxUses}` : ""}`,
       ip,
     }).catch(() => {});
 
