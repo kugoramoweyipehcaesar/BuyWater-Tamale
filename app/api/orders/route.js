@@ -136,36 +136,78 @@ export async function POST(request) {
 
     const isMomo = String(body.paymentMethod || "").toLowerCase().includes("momo");
 
-    const order = await prisma.order.create({
-      data: {
-        orderNumber: body.orderNumber || genOrderNumber(),
-        customerName:
-          body.customerName || user?.name || user?.username || "Customer",
-        username: body.username || user?.username || "",
-        phone: body.phone || user?.phone || "",
-        email: body.email || user?.email || "",
-        address: body.address || body.hostel || "",
-        hostel: body.hostel || "",
-        customHostel: body.customHostel || "",
-        roomNumber: body.roomNumber || "",
-        blockNumber: body.blockNumber || "",
-        products:
-          typeof body.products === "string"
-            ? body.products
-            : JSON.stringify(body.products || []),
-        gallons: Number(body.gallons) || 1,
-        totalAmount: Number(body.totalAmount) || 0,
-        paymentMethod: body.paymentMethod || "cash_on_delivery",
-        momoNumber: body.momoNumber || "",
-        momoReference: body.momoReference || "",
-        paymentConfirmed: !isMomo,
-        status: "PENDING",
-        isSubscription: !!body.isSubscription,
-        notes,
-        deliveryNotes: body.deliveryNotes || "",
-        userId: user?.id || null,
-      },
-    });
+    const baseData = {
+      orderNumber: body.orderNumber || genOrderNumber(),
+      customerName:
+        body.customerName || user?.name || user?.username || "Customer",
+      username: body.username || user?.username || "",
+      phone: body.phone || user?.phone || "",
+      email: body.email || user?.email || "",
+      address: body.address || body.hostel || "",
+      hostel: body.hostel || "",
+      customHostel: body.customHostel || "",
+      roomNumber: body.roomNumber || "",
+      blockNumber: body.blockNumber || "",
+      products:
+        typeof body.products === "string"
+          ? body.products
+          : JSON.stringify(body.products || []),
+      gallons: Number(body.gallons) || 1,
+      totalAmount: Number(body.totalAmount) || 0,
+      paymentMethod: body.paymentMethod || "cash_on_delivery",
+      momoNumber: body.momoNumber || "",
+      momoReference: body.momoReference || "",
+      status: "PENDING",
+      isSubscription: !!body.isSubscription,
+      notes,
+      deliveryNotes: body.deliveryNotes || "",
+      userId: user?.id || null,
+    };
+
+    // paymentConfirmed requires DB column — try with it, fall back without so orders never fail
+    let order;
+    try {
+      order = await prisma.order.create({
+        data: { ...baseData, paymentConfirmed: !isMomo },
+      });
+    } catch (createErr) {
+      const msg = String(createErr?.message || createErr || "");
+      if (
+        msg.includes("paymentConfirmed") ||
+        msg.includes("Unknown arg") ||
+        msg.includes("column") ||
+        createErr?.code === "P2022"
+      ) {
+        console.warn(
+          "[orders] paymentConfirmed column missing — creating without it",
+          msg.slice(0, 120)
+        );
+        order = await prisma.order.create({ data: baseData });
+        // Mark pending MoMo in notes so UI/admin still know
+        if (isMomo && !String(order.notes || "").includes("PAYMENT_PENDING")) {
+          try {
+            order = await prisma.order.update({
+              where: { id: order.id },
+              data: {
+                notes: `${order.notes || ""}${order.notes ? " | " : ""}PAYMENT_PENDING`.trim(),
+              },
+            });
+          } catch (_) {}
+        }
+      } else {
+        throw createErr;
+      }
+    }
+
+    // Normalize for clients when column missing
+    if (order.paymentConfirmed === undefined || order.paymentConfirmed === null) {
+      order = {
+        ...order,
+        paymentConfirmed: isMomo
+          ? !String(order.notes || "").includes("PAYMENT_PENDING")
+          : true,
+      };
+    }
 
     let promoUpdated = null;
     if (promoId && user?.id) {
