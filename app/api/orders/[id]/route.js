@@ -53,6 +53,23 @@ export async function PATCH(request, { params }) {
           { status: 403 }
         );
       }
+      if (
+        isStaff &&
+        body.status &&
+        body.status !== "CANCELLED" &&
+        body.status !== "PENDING" &&
+        String(existing.paymentMethod || "").toLowerCase().includes("momo") &&
+        !existing.paymentConfirmed &&
+        body.paymentConfirmed !== true
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Confirm MoMo payment first before moving this order past Pending",
+          },
+          { status: 400 }
+        );
+      }
       data.status = body.status;
     }
     if (body.cancelReason != null) data.cancelReason = body.cancelReason;
@@ -60,6 +77,9 @@ export async function PATCH(request, { params }) {
     if (isStaff) {
       if (body.driverName != null) data.driverName = body.driverName;
       if (body.driverPhone != null) data.driverPhone = body.driverPhone;
+      if (body.paymentConfirmed != null) {
+        data.paymentConfirmed = !!body.paymentConfirmed;
+      }
     }
 
     const order = await prisma.order.update({ where: { id }, data });
@@ -81,6 +101,14 @@ export async function PATCH(request, { params }) {
         console.error("[orders] cancel notify error:", err?.message || err);
         emailResult = { ok: false, error: err?.message || "email error" };
       }
+    } else if (data.paymentConfirmed) {
+      await logActivity({
+        userId: user.id,
+        email: user.email,
+        action: "PAYMENT_CONFIRMED",
+        details: `MoMo payment confirmed for ${order.orderNumber}`,
+        ip,
+      }).catch(() => {});
     } else if (data.status) {
       await logActivity({
         userId: user.id,
