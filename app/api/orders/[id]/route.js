@@ -9,6 +9,17 @@ function isAdminRole(role) {
   return ["ADMIN", "SUPER_ADMIN"].includes(String(role || "").toUpperCase());
 }
 
+function isMomoPending(order) {
+  const isMomo = String(order.paymentMethod || "")
+    .toLowerCase()
+    .includes("momo");
+  if (!isMomo) return false;
+  if (order.paymentConfirmed === true) return false;
+  if (order.paymentConfirmed === false) return true;
+  // Fallback when column missing: notes flag
+  return String(order.notes || "").includes("PAYMENT_PENDING");
+}
+
 export async function GET(request, { params }) {
   try {
     const { id } = params;
@@ -53,13 +64,13 @@ export async function PATCH(request, { params }) {
           { status: 403 }
         );
       }
+      // Soft guide only when we know payment is still pending — still allow admin override via paymentConfirmed in same request
       if (
         isStaff &&
         body.status &&
         body.status !== "CANCELLED" &&
         body.status !== "PENDING" &&
-        String(existing.paymentMethod || "").toLowerCase().includes("momo") &&
-        !existing.paymentConfirmed &&
+        isMomoPending(existing) &&
         body.paymentConfirmed !== true
       ) {
         return NextResponse.json(
@@ -79,10 +90,48 @@ export async function PATCH(request, { params }) {
       if (body.driverPhone != null) data.driverPhone = body.driverPhone;
       if (body.paymentConfirmed != null) {
         data.paymentConfirmed = !!body.paymentConfirmed;
+        // Clear PAYMENT_PENDING note when confirming
+        if (body.paymentConfirmed) {
+          const n = String(existing.notes || "")
+            .replace(/\s*\|?\s*PAYMENT_PENDING/g, "")
+            .trim();
+          data.notes = n;
+        }
       }
     }
 
-    const order = await prisma.order.update({ where: { id }, data });
+    let order;
+    try {
+      order = await prisma.order.update({ where: { id }, data });
+    } catch (updateErr) {
+      const msg = String(updateErr?.message || updateErr || "");
+      if (
+        msg.includes("paymentConfirmed") ||
+        msg.includes("Unknown arg") ||
+        msg.includes("column") ||
+        updateErr?.code === "P2022"
+      ) {
+        // Column missing — confirm via notes only
+        const fallback = { ...data };
+        delete fallback.paymentConfirmed;
+        if (body.paymentConfirmed === true) {
+          const n = String(existing.notes || "")
+            .replace(/\s*\|?\s*PAYMENT_PENDING/g, "")
+            .trim();
+          fallback.notes = n;
+        }
+        order = await prisma.order.update({ where: { id }, data: fallback });
+        order = {
+          ...order,
+          paymentConfirmed:
+            body.paymentConfirmed === true
+              ? true
+              : !String(order.notes || "").includes("PAYMENT_PENDING"),
+        };
+      } else {
+        throw updateErr;
+      }
+    }
 
     const ip = clientIp(request);
     let emailResult = null;
@@ -101,7 +150,7 @@ export async function PATCH(request, { params }) {
         console.error("[orders] cancel notify error:", err?.message || err);
         emailResult = { ok: false, error: err?.message || "email error" };
       }
-    } else if (data.paymentConfirmed) {
+    } else if (body.paymentConfirmed) {
       await logActivity({
         userId: user.id,
         email: user.email,
