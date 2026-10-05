@@ -14,10 +14,19 @@ function isMomoPending(order) {
     .toLowerCase()
     .includes("momo");
   if (!isMomo) return false;
-  if (order.paymentConfirmed === true) return false;
-  if (order.paymentConfirmed === false) return true;
-  // Fallback when column missing: notes flag
-  return String(order.notes || "").includes("PAYMENT_PENDING");
+  const notes = String(order.notes || "");
+  if (notes.includes("PAYMENT_CONFIRMED")) return false;
+  return notes.includes("PAYMENT_PENDING");
+}
+
+function withPaymentFlags(order) {
+  const isMomo = String(order.paymentMethod || "")
+    .toLowerCase()
+    .includes("momo");
+  return {
+    ...order,
+    paymentConfirmed: isMomo ? !isMomoPending(order) : true,
+  };
 }
 
 export async function GET(request, { params }) {
@@ -27,7 +36,7 @@ export async function GET(request, { params }) {
     if (!order) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ order });
+    return NextResponse.json({ order: withPaymentFlags(order) });
   } catch (e) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
@@ -64,7 +73,6 @@ export async function PATCH(request, { params }) {
           { status: 403 }
         );
       }
-      // Soft guide only when we know payment is still pending — still allow admin override via paymentConfirmed in same request
       if (
         isStaff &&
         body.status &&
@@ -88,50 +96,21 @@ export async function PATCH(request, { params }) {
     if (isStaff) {
       if (body.driverName != null) data.driverName = body.driverName;
       if (body.driverPhone != null) data.driverPhone = body.driverPhone;
-      if (body.paymentConfirmed != null) {
-        data.paymentConfirmed = !!body.paymentConfirmed;
-        // Clear PAYMENT_PENDING note when confirming
-        if (body.paymentConfirmed) {
-          const n = String(existing.notes || "")
-            .replace(/\s*\|?\s*PAYMENT_PENDING/g, "")
-            .trim();
-          data.notes = n;
-        }
+      // Confirm payment via notes only (no DB column)
+      if (body.paymentConfirmed === true) {
+        let n = String(
+          data.notes != null ? data.notes : existing.notes || ""
+        );
+        n = n
+          .replace(/\s*\|?\s*PAYMENT_PENDING/g, "")
+          .replace(/\s*\|?\s*PAYMENT_CONFIRMED/g, "")
+          .trim();
+        n = `${n}${n ? " | " : ""}PAYMENT_CONFIRMED`.trim();
+        data.notes = n;
       }
     }
 
-    let order;
-    try {
-      order = await prisma.order.update({ where: { id }, data });
-    } catch (updateErr) {
-      const msg = String(updateErr?.message || updateErr || "");
-      if (
-        msg.includes("paymentConfirmed") ||
-        msg.includes("Unknown arg") ||
-        msg.includes("column") ||
-        updateErr?.code === "P2022"
-      ) {
-        // Column missing — confirm via notes only
-        const fallback = { ...data };
-        delete fallback.paymentConfirmed;
-        if (body.paymentConfirmed === true) {
-          const n = String(existing.notes || "")
-            .replace(/\s*\|?\s*PAYMENT_PENDING/g, "")
-            .trim();
-          fallback.notes = n;
-        }
-        order = await prisma.order.update({ where: { id }, data: fallback });
-        order = {
-          ...order,
-          paymentConfirmed:
-            body.paymentConfirmed === true
-              ? true
-              : !String(order.notes || "").includes("PAYMENT_PENDING"),
-        };
-      } else {
-        throw updateErr;
-      }
-    }
+    const order = await prisma.order.update({ where: { id }, data });
 
     const ip = clientIp(request);
     let emailResult = null;
@@ -169,7 +148,7 @@ export async function PATCH(request, { params }) {
     }
 
     return NextResponse.json({
-      order,
+      order: withPaymentFlags(order),
       adminEmailSent: emailResult ? !!emailResult.ok : undefined,
       adminEmailError:
         emailResult && !emailResult.ok ? emailResult.error : undefined,
