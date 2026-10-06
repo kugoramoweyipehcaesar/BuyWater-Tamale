@@ -161,6 +161,13 @@ export default function HomePage() {
       supportCfg.issues?.desc ||
       "Late delivery, wrong hostel — report from your Profile → Submit complaint",
   };
+  const ctaCfg = settings?.ctaSection || {};
+  const ctaTitle = ctaCfg.title || "Thirsty? Get Water Now.";
+  const ctaSubtitle =
+    ctaCfg.subtitle ||
+    "Order in seconds. Delivered in minutes. Serving all UDS hostels and environs in Tamale.";
+  const ctaButtonText =
+    ctaCfg.buttonText || `Order Now — Ghc${price}/gallon`;
   const productDesc =
     settings?.productDescription ||
     "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.";
@@ -390,15 +397,14 @@ export default function HomePage() {
           className="mx-auto mb-4 h-16 w-16 rounded-full object-cover shadow"
         />
         <h2 className="text-2xl font-bold text-[#0B2545] sm:text-3xl">
-          Thirsty? Get Water Now.
+          {ctaTitle}
         </h2>
         <p className="mx-auto mt-2 max-w-md px-4 text-sm text-slate-500">
-          Order in seconds. Delivered in minutes. Serving all UDS hostels and
-          environs in Tamale.
+          {ctaSubtitle}
         </p>
         <Link href={orderHref} className={orderCtaClassBottom}>
           <Droplets className="h-4 w-4" />
-          Order Now — Ghc{price}/gallon
+          {ctaButtonText}
         </Link>
       </section>
 
