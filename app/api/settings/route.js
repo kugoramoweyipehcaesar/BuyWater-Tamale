@@ -73,6 +73,7 @@ function withExtras(settings) {
     whyChoose: extra.whyChoose || null,
     supportSection: extra.supportSection || null,
     ctaSection: extra.ctaSection || null,
+    footerSection: extra.footerSection || null,
   };
 }
 
@@ -214,6 +215,20 @@ export async function PATCH(request) {
             "Order in seconds. Delivered in minutes. Serving all UDS hostels and environs in Tamale."
         ).slice(0, 400),
         buttonText: String(c.buttonText || "").slice(0, 80),
+      };
+    }
+
+    if (raw.footerSection !== undefined) {
+      const f = raw.footerSection || {};
+      extra.footerSection = {
+        brandName: String(f.brandName || "BuyWater").slice(0, 80),
+        locationLine: String(
+          f.locationLine || "Tamale UDS and environs · Tamale, Northern Region, Ghana"
+        ).slice(0, 200),
+        contactLine: String(f.contactLine || "").slice(0, 200),
+        copyrightLine: String(
+          f.copyrightLine || "BuyWater. Fresh Water Delivered."
+        ).slice(0, 200),
       };
     }
 
