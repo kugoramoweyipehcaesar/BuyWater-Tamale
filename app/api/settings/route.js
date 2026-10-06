@@ -72,6 +72,7 @@ function withExtras(settings) {
     howItWorks: extra.howItWorks || null,
     whyChoose: extra.whyChoose || null,
     supportSection: extra.supportSection || null,
+    ctaSection: extra.ctaSection || null,
   };
 }
 
@@ -201,6 +202,18 @@ export async function PATCH(request) {
           "Issues?",
           "Late delivery, wrong hostel — report from your Profile → Submit complaint"
         ),
+      };
+    }
+
+    if (raw.ctaSection !== undefined) {
+      const c = raw.ctaSection || {};
+      extra.ctaSection = {
+        title: String(c.title || "Thirsty? Get Water Now.").slice(0, 120),
+        subtitle: String(
+          c.subtitle ||
+            "Order in seconds. Delivered in minutes. Serving all UDS hostels and environs in Tamale."
+        ).slice(0, 400),
+        buttonText: String(c.buttonText || "").slice(0, 80),
       };
     }
 
