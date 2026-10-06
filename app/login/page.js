@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -29,12 +30,20 @@ export default function LoginPage() {
         setError(data.error || "Login failed");
         return;
       }
-      if (data.user?.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
-      router.refresh();
+
+      // Show "Login successful" top-left for 2 seconds, then redirect
+      setLoginSuccess(true);
+      const dest =
+        data.user?.role === "ADMIN" || data.user?.role === "SUPER_ADMIN"
+          ? "/admin"
+          : data.user?.role === "RIDER"
+            ? "/rider"
+            : "/dashboard";
+
+      setTimeout(() => {
+        router.push(dest);
+        router.refresh();
+      }, 2000);
     } catch {
       setError("Network error – is the server running?");
     } finally {
@@ -44,6 +53,15 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#D6EAF8] px-4 py-10">
+      {loginSuccess && (
+        <div className="fixed left-4 top-4 z-50 flex items-center gap-2 rounded-xl border border-green-200 bg-white px-4 py-2.5 text-sm font-semibold text-green-700 shadow-lg animate-in fade-in">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
+            <Check className="h-3.5 w-3.5 text-green-600" />
+          </span>
+          Login successful
+        </div>
+      )}
+
       <div className="mb-6 flex flex-col items-center">
         <img
           src="/logo.jpg"
@@ -131,7 +149,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || loginSuccess}
             className="flex w-full items-center justify-center rounded-xl bg-[#0077C8] py-3 text-sm font-semibold text-white hover:bg-[#0066AD] disabled:opacity-60"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Login"}
@@ -158,7 +176,7 @@ export default function LoginPage() {
       </div>
 
       <p className="mt-6 text-sm text-slate-600">
-        Don&apos;t have an account?{" "}
+        Don't have an account?{" "}
         <Link href="/register" className="font-semibold text-[#0077C8] hover:underline">
           Sign Up
         </Link>
