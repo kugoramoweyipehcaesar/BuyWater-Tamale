@@ -129,9 +129,16 @@ export default function OrderPage() {
       setOrderError("Cash on delivery is not available");
       return;
     }
-    if (paymentMethod === "momo" && !momoNumber.trim()) {
-      setOrderError("Enter your MoMo number");
-      return;
+    if (paymentMethod === "momo") {
+      const digits = momoNumber.replace(/\D/g, "");
+      if (digits.length !== 10) {
+        setOrderError("MoMo number must be exactly 10 digits");
+        return;
+      }
+      if (!momoReference.trim()) {
+        setOrderError("Transaction reference is required");
+        return;
+      }
     }
     setOrderLoading(true);
     try {
@@ -151,8 +158,8 @@ export default function OrderPage() {
           gallons: totalGallons,
           totalAmount: total,
           paymentMethod,
-          momoNumber: paymentMethod === "momo" ? momoNumber : "",
-          momoReference: paymentMethod === "momo" ? momoReference : "",
+          momoNumber: paymentMethod === "momo" ? momoNumber.replace(/\D/g, "").slice(0, 10) : "",
+          momoReference: paymentMethod === "momo" ? momoReference.trim() : "",
           isSubscription,
           promoId: promoApplied?.id || null,
           promoCode: promoApplied?.code || "",
@@ -354,9 +361,27 @@ export default function OrderPage() {
                 </div>
                 <p className="mt-2 text-xs text-slate-600">After paying, enter your sender number and reference below so we can confirm.</p>
               </div>
-              <label className="block text-xs font-medium text-slate-600">Your MoMo number (the one you paid from)</label>
-              <input value={momoNumber} onChange={(e) => setMomoNumber(e.target.value)} placeholder="e.g. 024XXXXXXX" required className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" />
-              <input value={momoReference} onChange={(e) => setMomoReference(e.target.value)} placeholder="Transaction reference (optional)" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" />
+              <label className="block text-xs font-medium text-slate-600">Your MoMo number (exactly 10 digits)</label>
+              <input
+                required
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                value={momoNumber}
+                onChange={(e) => setMomoNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                placeholder="e.g. 0241234567"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black"
+              />
+              <p className="text-[11px] text-slate-500">{momoNumber.length}/10 digits</p>
+              <label className="block text-xs font-medium text-slate-600">Transaction reference</label>
+              <input
+                required
+                value={momoReference}
+                onChange={(e) => setMomoReference(e.target.value)}
+                placeholder="Transaction reference"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black"
+              />
             </div>
           )}
 
