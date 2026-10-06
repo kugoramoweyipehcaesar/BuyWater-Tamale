@@ -70,6 +70,7 @@ function withExtras(settings) {
     callNumber1: whatsappNumber,
     callNumber2: secondaryPhone,
     howItWorks: extra.howItWorks || null,
+    whyChoose: extra.whyChoose || null,
   };
 }
 
@@ -163,6 +164,22 @@ export async function PATCH(request) {
           return {
             title: String(s.title || "").slice(0, 80),
             desc: String(s.desc || "").slice(0, 500),
+          };
+        }),
+      };
+    }
+
+    if (raw.whyChoose !== undefined) {
+      const w = raw.whyChoose || {};
+      const items = Array.isArray(w.items) ? w.items : [];
+      extra.whyChoose = {
+        badge: String(w.badge || "Built for Students").slice(0, 80),
+        sectionTitle: String(w.sectionTitle || "Why Choose BuyWater").slice(0, 120),
+        items: [0, 1, 2, 3, 4, 5].map((i) => {
+          const it = items[i] || {};
+          return {
+            title: String(it.title || "").slice(0, 80),
+            desc: String(it.desc || "").slice(0, 500),
           };
         }),
       };
