@@ -95,6 +95,51 @@ export default function HomePage() {
       desc: (c && c.desc) || d.desc,
     };
   });
+  const whyDefaults = [
+    {
+      icon: Truck,
+      title: "Fast Delivery",
+      desc: "Under 60 minutes to Yaa Naa Hall, Sagnarigu Hall, Kumbungu Hostel, Tech Hostel, Citadel Hostel, Northern Hostel and all other hostels.",
+    },
+    {
+      icon: MapPin,
+      title: "Live Order Tracking",
+      desc: "Get your driver's number to call and track your delivery in real time until it reaches your door.",
+    },
+    {
+      icon: Smartphone,
+      title: "MoMo + Cash",
+      desc: "Pay however is convenient. MTN, Vodafone, AirtelTigo supported — or pay cash on delivery.",
+    },
+    {
+      icon: RefreshCw,
+      title: "Subscribe & Save",
+      desc: `Get ${subGallons} gallons for GH¢${subPrice} instead of GH¢${(
+        subGallons * price
+      ).toFixed(0)}. Cancel wrong orders without any commitments.`,
+    },
+    {
+      icon: Droplets,
+      title: "Reliable Supply",
+      desc: "Hygienic water, affordable, and always on time. We never leave you dry and unattended to.",
+    },
+    {
+      icon: MessageCircle,
+      title: "WhatsApp Support",
+      desc: "Quick help if your water is late. Message us directly on WhatsApp for the fastest response.",
+    },
+  ];
+  const whyCfg = settings?.whyChoose;
+  const whyBadge = (whyCfg && whyCfg.badge) || "Built for Students";
+  const whyTitle = (whyCfg && whyCfg.sectionTitle) || "Why Choose BuyWater";
+  const whyItems = whyDefaults.map((d, i) => {
+    const c = whyCfg?.items?.[i];
+    return {
+      icon: d.icon,
+      title: (c && c.title) || d.title,
+      desc: (c && c.desc) || d.desc,
+    };
+  });
   const productDesc =
     settings?.productDescription ||
     "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.";
@@ -241,47 +286,14 @@ export default function HomePage() {
         <div className="mx-auto max-w-4xl px-4">
           <div className="mb-2 text-center">
             <span className="rounded-full bg-[#0077C8]/10 px-3 py-1 text-xs font-semibold text-[#0077C8]">
-              Built for Students
+              {whyBadge}
             </span>
           </div>
           <h2 className="mb-10 text-center text-2xl font-bold text-[#0B2545]">
-            Why Choose BuyWater
+            {whyTitle}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                icon: Truck,
-                title: "Fast Delivery",
-                desc: "Under 60 minutes to Yaa Naa Hall, Sagnarigu Hall, Kumbungu Hostel, Tech Hostel, Citadel Hostel, Northern Hostel and all other hostels.",
-              },
-              {
-                icon: MapPin,
-                title: "Live Order Tracking",
-                desc: "Get your driver's number to call and track your delivery in real time until it reaches your door.",
-              },
-              {
-                icon: Smartphone,
-                title: "MoMo + Cash",
-                desc: "Pay however is convenient. MTN, Vodafone, AirtelTigo supported — or pay cash on delivery.",
-              },
-              {
-                icon: RefreshCw,
-                title: "Subscribe & Save",
-                desc: `Get ${subGallons} gallons for GH¢${subPrice} instead of GH¢${(
-                  subGallons * price
-                ).toFixed(0)}. Cancel wrong orders without any commitments.`,
-              },
-              {
-                icon: Droplets,
-                title: "Reliable Supply",
-                desc: "Hygienic water, affordable, and always on time. We never leave you dry and unattended to.",
-              },
-              {
-                icon: MessageCircle,
-                title: "WhatsApp Support",
-                desc: "Quick help if your water is late. Message us directly on WhatsApp for the fastest response.",
-              },
-            ].map((f) => (
+            {whyItems.map((f) => (
               <div
                 key={f.title}
                 className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
