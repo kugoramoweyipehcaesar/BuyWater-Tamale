@@ -71,6 +71,7 @@ function withExtras(settings) {
     callNumber2: secondaryPhone,
     howItWorks: extra.howItWorks || null,
     whyChoose: extra.whyChoose || null,
+    supportSection: extra.supportSection || null,
   };
 }
 
@@ -182,6 +183,24 @@ export async function PATCH(request) {
             desc: String(it.desc || "").slice(0, 500),
           };
         }),
+      };
+    }
+
+    if (raw.supportSection !== undefined) {
+      const s = raw.supportSection || {};
+      const card = (c, fallbackTitle, fallbackDesc) => ({
+        title: String((c && c.title) || fallbackTitle).slice(0, 80),
+        desc: String((c && c.desc) || fallbackDesc).slice(0, 500),
+      });
+      extra.supportSection = {
+        whatsapp: card(s.whatsapp, "WhatsApp", "Fastest response · opens DM"),
+        email: card(s.email, "Email", "We'll reply within 24 hours"),
+        hours: card(s.hours, "Hours", ""),
+        issues: card(
+          s.issues,
+          "Issues?",
+          "Late delivery, wrong hostel — report from your Profile → Submit complaint"
+        ),
       };
     }
 
