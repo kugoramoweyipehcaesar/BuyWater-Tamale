@@ -168,6 +168,16 @@ export default function HomePage() {
     "Order in seconds. Delivered in minutes. Serving all UDS hostels and environs in Tamale.";
   const ctaButtonText =
     ctaCfg.buttonText || `Order Now — Ghc${price}/gallon`;
+  const footerCfg = settings?.footerSection || {};
+  const footerBrand = footerCfg.brandName || "BuyWater";
+  const footerLocation =
+    footerCfg.locationLine ||
+    `${serviceArea} · Tamale, Northern Region, Ghana`;
+  const footerContact =
+    footerCfg.contactLine ||
+    `Call / WhatsApp: ${call1} / ${call2}`;
+  const footerCopyright =
+    footerCfg.copyrightLine || "BuyWater. Fresh Water Delivered.";
   const productDesc =
     settings?.productDescription ||
     "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.";
@@ -413,19 +423,15 @@ export default function HomePage() {
           <div className="mb-1 flex items-center gap-2">
             <img
               src="/logo.jpg"
-              alt="BuyWater"
+              alt={footerBrand}
               className="h-10 w-10 rounded-full object-cover"
             />
-            <span className="font-semibold">BuyWater</span>
+            <span className="font-semibold">{footerBrand}</span>
           </div>
-          <p className="text-sm text-white/70">
-            {serviceArea} · Tamale, Northern Region, Ghana
-          </p>
-          <p className="text-sm text-white/70">
-            Call / WhatsApp: {call1} / {call2}
-          </p>
+          <p className="text-sm text-white/70">{footerLocation}</p>
+          <p className="text-sm text-white/70">{footerContact}</p>
           <p className="mt-3 text-xs text-white/40">
-            © {new Date().getFullYear()} BuyWater. Fresh Water Delivered.
+            © {new Date().getFullYear()} {footerCopyright}
           </p>
         </div>
       </footer>
