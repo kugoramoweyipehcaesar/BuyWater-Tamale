@@ -19,6 +19,7 @@ import {
   MessageSquareWarning,
   ClipboardList,
   Sparkles,
+  MessageCircle,
 } from "lucide-react";
 
 const MENU = [
@@ -31,6 +32,7 @@ const MENU = [
   { href: "/admin/payment-settings", label: "Payment Settings", icon: CreditCard },
   { href: "/admin/how-it-works", label: "How It Works", icon: ClipboardList },
   { href: "/admin/why-choose", label: "Why Choose BuyWater", icon: Sparkles },
+  { href: "/admin/support-section", label: "Support Section", icon: MessageCircle },
   { href: "/admin/order-verification", label: "Verification", icon: ShieldCheck },
   { href: "/admin?panel=overview", label: "Overview", icon: BarChart3, panel: "overview" },
   { href: "/admin?panel=orders", label: "Orders", icon: Package, panel: "orders" },
