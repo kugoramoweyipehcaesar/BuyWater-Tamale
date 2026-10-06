@@ -107,7 +107,6 @@ export default function SiteHeader({ user }) {
 
             {user ? (
               <>
-                {/* Top-right: All Orders */}
                 <Link
                   href="/all-orders"
                   className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
@@ -123,21 +122,14 @@ export default function SiteHeader({ user }) {
                   All Orders
                 </Link>
 
-                {/* Username (left) + profile picture (right) → profile */}
+                {/* Profile photo + Username to the RIGHT of photo */}
                 <Link
                   href="/profile"
-                  className={`inline-flex max-w-[11rem] items-center gap-2 rounded-full py-0.5 pl-2 pr-0.5 transition ${
+                  className={`inline-flex max-w-[12rem] items-center gap-2 rounded-full py-0.5 pl-0.5 pr-2 transition ${
                     onHome ? "hover:bg-white/15" : "hover:bg-slate-100 dark:hover:bg-zinc-800"
                   }`}
                   title={displayName}
                 >
-                  <span
-                    className={`truncate text-xs font-semibold ${
-                      onHome ? "text-white" : "text-[#0B2545] dark:text-zinc-100"
-                    }`}
-                  >
-                    {displayName}
-                  </span>
                   {user.profilePhoto ? (
                     <img
                       src={user.profilePhoto}
@@ -147,12 +139,21 @@ export default function SiteHeader({ user }) {
                   ) : (
                     <span
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                        onHome ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500 dark:bg-zinc-700 dark:text-zinc-300"
+                        onHome
+                          ? "bg-white/20 text-white"
+                          : "bg-slate-200 text-slate-500 dark:bg-zinc-700 dark:text-zinc-300"
                       }`}
                     >
                       <User className="h-4 w-4" />
                     </span>
                   )}
+                  <span
+                    className={`truncate text-xs font-semibold ${
+                      onHome ? "text-white" : "text-[#0B2545] dark:text-zinc-100"
+                    }`}
+                  >
+                    {displayName}
+                  </span>
                 </Link>
               </>
             ) : (
