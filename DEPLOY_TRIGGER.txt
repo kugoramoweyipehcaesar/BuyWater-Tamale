@@ -1,2 +1,4 @@
-Redeploy trigger: 2026-10-06T07:46Z
-All Orders header, MoMo 10 digits, cancel success popup, user-only complaints.
+Redeploy trigger: 2026-10-06T07:59Z
+Header: photo + username right
+Profile: email + delete account restored
+MoMo: 10 digits required
