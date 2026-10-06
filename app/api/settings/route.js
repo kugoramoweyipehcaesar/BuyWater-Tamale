@@ -69,6 +69,7 @@ function withExtras(settings) {
     secondaryPhone,
     callNumber1: whatsappNumber,
     callNumber2: secondaryPhone,
+    howItWorks: extra.howItWorks || null,
   };
 }
 
@@ -150,6 +151,21 @@ export async function PATCH(request) {
     if (raw.secondaryPhone !== undefined) {
       extra.secondaryPhone = String(raw.secondaryPhone || "").trim();
       extra.callNumber2 = extra.secondaryPhone;
+    }
+
+    if (raw.howItWorks !== undefined) {
+      const h = raw.howItWorks || {};
+      const steps = Array.isArray(h.steps) ? h.steps : [];
+      extra.howItWorks = {
+        sectionTitle: String(h.sectionTitle || "How It Works").slice(0, 120),
+        steps: [0, 1, 2].map((i) => {
+          const s = steps[i] || {};
+          return {
+            title: String(s.title || "").slice(0, 80),
+            desc: String(s.desc || "").slice(0, 500),
+          };
+        }),
+      };
     }
 
     if (raw.contentJson !== undefined && typeof raw.contentJson === "string") {
