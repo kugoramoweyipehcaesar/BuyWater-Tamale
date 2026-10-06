@@ -62,6 +62,39 @@ export default function HomePage() {
   const adminPhoneDigits = toWhatsAppDigits(call1);
   const serviceArea = settings?.serviceArea || "Tamale UDS and environs";
   const heroTitle = settings?.heroTitle || "Fresh Water Delivered";
+  const howDefaults = [
+    {
+      n: "1",
+      icon: ClipboardList,
+      title: "Pick Your Gallons",
+      desc: `Choose how many gallons you need. 20L per gallon at Ghc${price} each. Select your hostel from the dropdown (Yaa Naa, Sagnarigu, Other Hostels — indicate name please).`,
+    },
+    {
+      n: "2",
+      icon: CreditCard,
+      title: "Pay Your Way",
+      desc: "Pay instantly with MoMo or choose Cash on Delivery. MTN, Vodafone, AirtelTigo supported.",
+    },
+    {
+      n: "3",
+      icon: Truck,
+      title: "Get It Delivered",
+      desc: `We deliver to your hostel in ${deliveryMin}–${deliveryMax} mins. Track your driver live until it reaches your door.`,
+    },
+  ];
+  const howCfg = settings?.howItWorks;
+  const howItWorksTitle =
+    (howCfg && howCfg.sectionTitle) || "How It Works";
+  const howIcons = [ClipboardList, CreditCard, Truck];
+  const howItWorksSteps = howDefaults.map((d, i) => {
+    const c = howCfg?.steps?.[i];
+    return {
+      n: d.n,
+      icon: howIcons[i] || d.icon,
+      title: (c && c.title) || d.title,
+      desc: (c && c.desc) || d.desc,
+    };
+  });
   const productDesc =
     settings?.productDescription ||
     "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.";
@@ -180,29 +213,10 @@ export default function HomePage() {
       <section id="how-it-works" className="bg-white py-16">
         <div className="mx-auto max-w-4xl px-4">
           <h2 className="mb-10 text-center text-2xl font-bold text-[#0B2545]">
-            How It Works
+            {howItWorksTitle}
           </h2>
           <div className="grid gap-5 sm:grid-cols-3">
-            {[
-              {
-                n: "1",
-                icon: ClipboardList,
-                title: "Pick Your Gallons",
-                desc: `Choose how many gallons you need. 20L per gallon at Ghc${price} each. Select your hostel from the dropdown (Yaa Naa, Sagnarigu, Other Hostels — indicate name please).`,
-              },
-              {
-                n: "2",
-                icon: CreditCard,
-                title: "Pay Your Way",
-                desc: "Pay instantly with MoMo or choose Cash on Delivery. MTN, Vodafone, AirtelTigo supported.",
-              },
-              {
-                n: "3",
-                icon: Truck,
-                title: "Get It Delivered",
-                desc: `We deliver to your hostel in ${deliveryMin}–${deliveryMax} mins. Track your driver live until it reaches your door.`,
-              },
-            ].map((s) => (
+            {howItWorksSteps.map((s) => (
               <div
                 key={s.n}
                 className="relative rounded-2xl border border-slate-100 bg-[#F8FBFE] p-6 text-center shadow-sm"
