@@ -140,6 +140,27 @@ export default function HomePage() {
       desc: (c && c.desc) || d.desc,
     };
   });
+  const supportCfg = settings?.supportSection || {};
+  const supportWhatsApp = {
+    title: supportCfg.whatsapp?.title || "WhatsApp",
+    desc:
+      supportCfg.whatsapp?.desc ||
+      `${call1} — Fastest response · opens DM`,
+  };
+  const supportEmail = {
+    title: supportCfg.email?.title || "Email",
+    desc: supportCfg.email?.desc || "We'll reply within 24 hours",
+  };
+  const supportHours = {
+    title: supportCfg.hours?.title || "Hours",
+    desc: supportCfg.hours?.desc || hours,
+  };
+  const supportIssues = {
+    title: supportCfg.issues?.title || "Issues?",
+    desc:
+      supportCfg.issues?.desc ||
+      "Late delivery, wrong hostel — report from your Profile → Submit complaint",
+  };
   const productDesc =
     settings?.productDescription ||
     "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.";
@@ -324,10 +345,8 @@ export default function HomePage() {
                 <MessageCircle className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-semibold text-[#0B2545]">WhatsApp</p>
-                <p className="text-sm text-slate-600">
-                  {call1} — Fastest response · opens DM
-                </p>
+                <p className="font-semibold text-[#0B2545]">{supportWhatsApp.title}</p>
+                <p className="text-sm text-slate-600">{supportWhatsApp.desc}</p>
               </div>
             </a>
             <a
@@ -338,10 +357,8 @@ export default function HomePage() {
                 <Mail className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-semibold text-[#0B2545]">Email</p>
-                <p className="text-sm text-slate-600">
-                  We'll reply within 24 hours
-                </p>
+                <p className="font-semibold text-[#0B2545]">{supportEmail.title}</p>
+                <p className="text-sm text-slate-600">{supportEmail.desc}</p>
               </div>
             </a>
             <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-5">
@@ -349,8 +366,8 @@ export default function HomePage() {
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-semibold text-[#0B2545]">Hours</p>
-                <p className="text-sm text-slate-600">{hours}</p>
+                <p className="font-semibold text-[#0B2545]">{supportHours.title}</p>
+                <p className="text-sm text-slate-600">{supportHours.desc}</p>
               </div>
             </div>
             <div className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-[#FFFBEB] p-5">
@@ -358,10 +375,8 @@ export default function HomePage() {
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-semibold text-[#0B2545]">Issues?</p>
-                <p className="text-sm text-slate-600">
-                  Late delivery, wrong hostel — report from your Profile → Submit complaint
-                </p>
+                <p className="font-semibold text-[#0B2545]">{supportIssues.title}</p>
+                <p className="text-sm text-slate-600">{supportIssues.desc}</p>
               </div>
             </div>
           </div>
