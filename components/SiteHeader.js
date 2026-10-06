@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, LogOut } from "lucide-react";
+import { User } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import AnnouncementPopup from "@/components/AnnouncementPopup";
 
@@ -19,6 +19,9 @@ export default function SiteHeader({ user }) {
   const linkClass = onHome
     ? "text-white/90 hover:text-white"
     : "text-slate-600 hover:text-[#0077C8] dark:text-zinc-300 dark:hover:text-sky-400";
+
+  const displayName =
+    user?.username || user?.name || (user?.email ? user.email.split("@")[0] : "User");
 
   return (
     <>
@@ -38,59 +41,140 @@ export default function SiteHeader({ user }) {
               className="h-9 w-9 rounded-full object-cover ring-2 ring-white/40"
             />
             <div className="hidden leading-tight sm:block">
-              <p className={`text-sm font-bold ${onHome ? "text-white" : "text-[#0077C8] dark:text-sky-400"}`}>
+              <p
+                className={`text-sm font-bold ${
+                  onHome ? "text-white" : "text-[#0077C8] dark:text-sky-400"
+                }`}
+              >
                 BuyWater
               </p>
-              <p className={`text-[10px] ${onHome ? "text-white/70" : "text-slate-500 dark:text-zinc-400"}`}>
+              <p
+                className={`text-[10px] ${
+                  onHome ? "text-white/70" : "text-slate-500 dark:text-zinc-400"
+                }`}
+              >
                 Fresh Water Delivered
               </p>
             </div>
           </Link>
+
           <nav className="hidden items-center gap-5 md:flex">
-            <a href="/#how-it-works" className={`text-sm font-medium ${linkClass}`}>How It Works</a>
-            <a href="/#features" className={`text-sm font-medium ${linkClass}`}>Features</a>
-            <a href="/#support" className={`text-sm font-medium ${linkClass}`}>Support</a>
-            {user ? (
+            <a href="/#how-it-works" className={`text-sm font-medium ${linkClass}`}>
+              How It Works
+            </a>
+            <a href="/#features" className={`text-sm font-medium ${linkClass}`}>
+              Features
+            </a>
+            <a href="/#support" className={`text-sm font-medium ${linkClass}`}>
+              Support
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle
+              compact
+              className={
+                onHome
+                  ? "!border-white/30 !bg-white/10 !text-white hover:!bg-white/20"
+                  : ""
+              }
+            />
+
+            {["ADMIN", "SUPER_ADMIN"].includes(user?.role) && (
               <Link
-                href="/all-orders"
-                className={`text-sm font-medium ${
-                  onAllOrders
-                    ? onHome
-                      ? "text-white font-semibold underline underline-offset-4"
-                      : "text-[#0077C8] font-semibold dark:text-sky-400"
-                    : linkClass
+                href="/admin"
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
+                  onHome
+                    ? "border border-white/30 text-white hover:bg-white/10"
+                    : "border border-slate-200 text-[#0B2545] hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
                 }`}
               >
-                All Orders
+                Admin
               </Link>
-            ) : null}
-          </nav>
-          <div className="flex items-center gap-2">
-            <ThemeToggle compact className={onHome ? "!border-white/30 !bg-white/10 !text-white hover:!bg-white/20" : ""} />
-            {["ADMIN", "SUPER_ADMIN"].includes(user?.role) && (
-              <Link href="/admin" className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${onHome ? "border border-white/30 text-white hover:bg-white/10" : "border border-slate-200 text-[#0B2545] hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"}`}>Admin</Link>
             )}
             {user?.role === "RIDER" && (
-              <Link href="/rider" className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${onHome ? "border border-white/30 text-white hover:bg-white/10" : "border border-slate-200 text-[#0B2545] hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"}`}>Rider</Link>
+              <Link
+                href="/rider"
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
+                  onHome
+                    ? "border border-white/30 text-white hover:bg-white/10"
+                    : "border border-slate-200 text-[#0B2545] hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                }`}
+              >
+                Rider
+              </Link>
             )}
+
             {user ? (
               <>
-                <Link href="/all-orders" className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold md:hidden ${
-                  onAllOrders
-                    ? onHome
-                      ? "bg-white/25 text-white"
-                      : "bg-[#0077C8]/15 text-[#0077C8]"
-                    : onHome
-                      ? "bg-white/15 text-white hover:bg-white/25"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200"
-                }`}>All Orders</Link>
-                <Link href="/dashboard" className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${onHome ? "bg-white/15 text-white hover:bg-white/25" : "bg-[#0077C8]/10 text-[#0077C8] hover:bg-[#0077C8]/20 dark:bg-sky-500/15 dark:text-sky-400"}`}>Order</Link>
-                <Link href="/profile" className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${onHome ? "text-white/90 hover:text-white" : "text-slate-600 hover:text-[#0077C8] dark:text-zinc-300 dark:hover:text-sky-400"}`}><User className="h-3.5 w-3.5" />Profile</Link>
+                {/* Top-right: All Orders */}
+                <Link
+                  href="/all-orders"
+                  className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold ${
+                    onAllOrders
+                      ? onHome
+                        ? "bg-white/25 text-white"
+                        : "bg-[#0077C8]/15 text-[#0077C8] dark:bg-sky-500/20 dark:text-sky-400"
+                      : onHome
+                        ? "bg-white/15 text-white hover:bg-white/25"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-200"
+                  }`}
+                >
+                  All Orders
+                </Link>
+
+                {/* Username (left) + profile picture (right) → profile */}
+                <Link
+                  href="/profile"
+                  className={`inline-flex max-w-[11rem] items-center gap-2 rounded-full py-0.5 pl-2 pr-0.5 transition ${
+                    onHome ? "hover:bg-white/15" : "hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                  title={displayName}
+                >
+                  <span
+                    className={`truncate text-xs font-semibold ${
+                      onHome ? "text-white" : "text-[#0B2545] dark:text-zinc-100"
+                    }`}
+                  >
+                    {displayName}
+                  </span>
+                  {user.profilePhoto ? (
+                    <img
+                      src={user.profilePhoto}
+                      alt=""
+                      className="h-8 w-8 shrink-0 rounded-full object-cover ring-2 ring-white/50"
+                    />
+                  ) : (
+                    <span
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        onHome ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500 dark:bg-zinc-700 dark:text-zinc-300"
+                      }`}
+                    >
+                      <User className="h-4 w-4" />
+                    </span>
+                  )}
+                </Link>
               </>
             ) : (
               <>
-                <Link href="/login" className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${onHome ? "text-white/90" : "text-slate-600 dark:text-zinc-300"}`}>Login</Link>
-                <Link href="/register" className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${onHome ? "bg-white text-[#0077C8]" : "bg-[#0077C8] text-white dark:bg-sky-500"}`}>Sign Up</Link>
+                <Link
+                  href="/login"
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                    onHome ? "text-white/90" : "text-slate-600 dark:text-zinc-300"
+                  }`}
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/register"
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                    onHome
+                      ? "bg-white text-[#0077C8]"
+                      : "bg-[#0077C8] text-white dark:bg-sky-500"
+                  }`}
+                >
+                  Sign Up
+                </Link>
               </>
             )}
           </div>
