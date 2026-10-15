@@ -19,6 +19,7 @@ import {
   ClipboardList,
   CreditCard,
 } from "lucide-react";
+import { useLiveProducts } from "@/lib/useLiveProducts";
 
 function toWhatsAppDigits(phone) {
   let d = String(phone || "").replace(/\D/g, "");
@@ -31,6 +32,7 @@ function toWhatsAppDigits(phone) {
 export default function HomePage() {
   const [user, setUser] = useState(null);
   const [settings, setSettings] = useState(null);
+  const { liveProduct } = useLiveProducts();
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -43,7 +45,7 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  const price = settings?.pricePerGallon ?? 2.5;
+  const price = liveProduct?.price ?? settings?.pricePerGallon ?? 2.5;
   const hours = settings?.operatingHours || "7 AM - 8:30 PM DAILY";
   const deliveryMin = settings?.deliveryTimeMin ?? 45;
   const deliveryMax = settings?.deliveryTimeMax ?? 60;
@@ -78,363 +80,105 @@ export default function HomePage() {
     {
       n: "3",
       icon: Truck,
-      title: "Get It Delivered",
-      desc: `We deliver to your hostel in ${deliveryMin}–${deliveryMax} mins. Track your driver live until it reaches your door.`,
+      title: "We Deliver Fast",
+      desc: `Your water arrives at your hostel door in ${deliveryMin}–${deliveryMax} minutes. Track status live.`,
     },
   ];
-  const howCfg = settings?.howItWorks;
-  const howItWorksTitle =
-    (howCfg && howCfg.sectionTitle) || "How It Works";
-  const howIcons = [ClipboardList, CreditCard, Truck];
-  const howItWorksSteps = howDefaults.map((d, i) => {
-    const c = howCfg?.steps?.[i];
-    return {
-      n: d.n,
-      icon: howIcons[i] || d.icon,
-      title: (c && c.title) || d.title,
-      desc: (c && c.desc) || d.desc,
-    };
-  });
   const whyDefaults = [
-    {
-      icon: Truck,
-      title: "Fast Delivery",
-      desc: "Under 60 minutes to Yaa Naa Hall, Sagnarigu Hall, Kumbungu Hostel, Tech Hostel, Citadel Hostel, Northern Hostel and all other hostels.",
-    },
-    {
-      icon: MapPin,
-      title: "Live Order Tracking",
-      desc: "Get your driver's number to call and track your delivery in real time until it reaches your door.",
-    },
-    {
-      icon: Smartphone,
-      title: "MoMo + Cash",
-      desc: "Pay however is convenient. MTN, Vodafone, AirtelTigo supported — or pay cash on delivery.",
-    },
-    {
-      icon: RefreshCw,
-      title: "Subscribe & Save",
-      desc: `Get ${subGallons} gallons for GH¢${subPrice} instead of GH¢${(
-        subGallons * price
-      ).toFixed(0)}. Cancel wrong orders without any commitments.`,
-    },
-    {
-      icon: Droplets,
-      title: "Reliable Supply",
-      desc: "Hygienic water, affordable, and always on time. We never leave you dry and unattended to.",
-    },
-    {
-      icon: MessageCircle,
-      title: "WhatsApp Support",
-      desc: "Quick help if your water is late. Message us directly on WhatsApp for the fastest response.",
-    },
+    { icon: Droplets, title: "Pure & Hygienic", desc: "Hygienically produced 20L gallons." },
+    { icon: Clock, title: "Fast Delivery", desc: `At your door in ${deliveryMin}–${deliveryMax} mins.` },
+    { icon: Shield, title: "Secure Payment", desc: "MoMo or cash on delivery." },
+    { icon: Sparkles, title: "Subscribe & Save", desc: `${subGallons} gallons for Ghc${subPrice}.` },
   ];
-  const whyCfg = settings?.whyChoose;
-  const whyBadge = (whyCfg && whyCfg.badge) || "Built for Students";
-  const whyTitle = (whyCfg && whyCfg.sectionTitle) || "Why Choose BuyWater";
-  const whyItems = whyDefaults.map((d, i) => {
-    const c = whyCfg?.items?.[i];
-    return {
-      icon: d.icon,
-      title: (c && c.title) || d.title,
-      desc: (c && c.desc) || d.desc,
-    };
-  });
-  const supportCfg = settings?.supportSection || {};
-  const supportWhatsApp = {
-    title: supportCfg.whatsapp?.title || "WhatsApp",
-    desc:
-      supportCfg.whatsapp?.desc ||
-      `${call1} — Fastest response · opens DM`,
-  };
-  const supportEmail = {
-    title: supportCfg.email?.title || "Email",
-    desc: supportCfg.email?.desc || "We'll reply within 24 hours",
-  };
-  const supportHours = {
-    title: supportCfg.hours?.title || "Hours",
-    desc: supportCfg.hours?.desc || hours,
-  };
-  const supportIssues = {
-    title: supportCfg.issues?.title || "Issues?",
-    desc:
-      supportCfg.issues?.desc ||
-      "Late delivery, wrong hostel — report from your Profile → Submit complaint",
-  };
-  const ctaCfg = settings?.ctaSection || {};
-  const ctaTitle = ctaCfg.title || "Thirsty? Get Water Now.";
-  const ctaSubtitle =
-    ctaCfg.subtitle ||
-    "Order in seconds. Delivered in minutes. Serving all UDS hostels and environs in Tamale.";
-  const ctaButtonText =
-    ctaCfg.buttonText || `Order Now — Ghc${price}/gallon`;
-  const footerCfg = settings?.footerSection || {};
-  const footerBrand = footerCfg.brandName || "BuyWater";
-  const footerLocation =
-    footerCfg.locationLine ||
-    `${serviceArea} · Tamale, Northern Region, Ghana`;
-  const footerContact =
-    footerCfg.contactLine ||
-    `Call / WhatsApp: ${call1} / ${call2}`;
-  const footerCopyright =
-    footerCfg.copyrightLine || "BuyWater. Fresh Water Delivered.";
   const productDesc =
     settings?.productDescription ||
     "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.";
-
-  const greeting = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
-  })();
-
-  const displayName =
-    user?.name || user?.username || (user ? "there" : null);
-
-  const orderHref = "/order";
-  const orderCtaClassTop =
-    "inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0077C8] shadow hover:bg-slate-50";
-  const orderCtaClassBottom =
-    "mt-6 inline-flex items-center gap-2 rounded-full bg-[#0077C8] px-8 py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-[#0066AD]";
+  const ctaCfg = settings?.ctaSection || {};
+  const ctaText =
+    ctaCfg.buttonText || `Order Now — Ghc${price}/gallon`;
 
   return (
-    <div className="min-h-screen bg-[#F0F7FC]">
+    <div className="min-h-screen bg-[#EEF6FC]">
       <SiteHeader user={user} />
-
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#0077C8] to-[#005A9E] text-white">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              "radial-gradient(ellipse at 20% 80%, rgba(255,255,255,0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 40%)",
-          }}
-        />
-        <div className="relative mx-auto max-w-4xl px-4 pb-16 pt-12 text-center sm:pb-20 sm:pt-16">
-          <img
-            src="/logo.jpg"
-            alt="BuyWater"
-            className="mx-auto mb-5 h-20 w-20 rounded-full border-4 border-white/30 object-cover shadow-lg sm:h-24 sm:w-24"
-          />
-          {user && (
-            <p className="mb-2 text-sm text-white/90">
-              {greeting}, {displayName}! 👋
-            </p>
-          )}
-          <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
-            {heroTitle}
-          </h1>
-          <p className="mt-2 text-base text-white/90 sm:text-lg">
-            To your door in {deliveryMin}–{deliveryMax} minutes
-          </p>
-          <p className="mt-1 text-sm text-white/70">
-            Serving {serviceArea} · Tamale, Northern Region, Ghana
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href={orderHref} className={orderCtaClassTop}>
-              <Droplets className="h-4 w-4" />
-              Order Now — Ghc{price}/gallon
-            </Link>
-            <a
-              href="#how-it-works"
-              className="inline-flex items-center gap-1 rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
-            >
-              How It Works <ArrowRight className="h-4 w-4" />
-            </a>
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#0077C8] to-[#0B2545] px-4 pb-16 pt-10 text-white">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-xl">
+              <p className="mb-2 text-sm font-medium text-sky-200">{serviceArea}</p>
+              <h1 className="text-3xl font-bold leading-tight sm:text-4xl">{heroTitle}</h1>
+              <p className="mt-3 text-sm text-sky-100 sm:text-base">{productDesc}</p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href="/order"
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0077C8] shadow hover:bg-slate-50"
+                >
+                  Order Now — Ghc{price}/gallon
+                </Link>
+                <a
+                  href={adminPhoneDigits ? `https://wa.me/${adminPhoneDigits}` : "#"}
+                  className="inline-flex items-center gap-1 rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </a>
+              </div>
+            </div>
+            <div className="flex flex-col items-center rounded-2xl bg-white/10 p-5 backdrop-blur">
+              <img src="/product.jpg" alt="20L Water Gallon" className="h-40 w-auto rounded-xl object-contain" />
+              <p className="mt-3 text-xl font-bold sm:text-2xl">Ghc{price}</p>
+              <p className="text-xs text-sky-100">per 20L gallon</p>
+            </div>
           </div>
-
-          <div className="mx-auto mt-10 grid max-w-lg grid-cols-3 gap-2 border-t border-white/20 pt-8 text-center">
-            <div>
-              <p className="text-xl font-bold sm:text-2xl">Ghc{price}</p>
-              <p className="text-[11px] text-white/70 sm:text-xs">Per Gallon</p>
-            </div>
-            <div className="border-x border-white/20">
-              <p className="text-xl font-bold sm:text-2xl">
-                {deliveryMin}–{deliveryMax}
-              </p>
-              <p className="text-[11px] text-white/70 sm:text-xs">Min Delivery</p>
-            </div>
-            <div>
-              <p className="text-sm font-bold leading-tight sm:text-base">
-                {hours}
-              </p>
-              <p className="text-[11px] text-white/70 sm:text-xs">Daily Hours</p>
-            </div>
+          <div className="mt-8 flex flex-wrap gap-4 text-xs text-sky-100">
+            <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {hours}</span>
+            <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {serviceArea}</span>
+            <span className="inline-flex items-center gap-1"><Droplets className="h-3.5 w-3.5 text-sky-200" /> 20L per gallon</span>
+            <span className="inline-flex items-center gap-1">Ghc{price} each</span>
           </div>
         </div>
       </section>
 
-      <section className="bg-[#F0F7FC] py-14 text-center">
-        <h2 className="text-2xl font-bold text-[#0B2545]">
-          Premium 20-Liter Water Gallons
-        </h2>
-        <p className="mx-auto mt-2 max-w-xl px-4 text-sm text-slate-500">
-          {productDesc}
-        </p>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-slate-600 shadow-sm">
-            <Droplets className="h-3.5 w-3.5 text-[#0077C8]" /> 20L per gallon
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 font-semibold text-[#0077C8] shadow-sm">
-            Ghc{price} each
-          </span>
-        </div>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
-          <span className="inline-flex items-center gap-1.5">
-            <Truck className="h-4 w-4 text-[#0077C8]" /> Fast Delivery
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-[#0077C8]" /> Fresh & Clean
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Shield className="h-4 w-4 text-[#0077C8]" /> Trusted Service
-          </span>
+      <section className="mx-auto max-w-5xl px-4 py-12">
+        <h2 className="mb-6 text-center text-xl font-bold text-[#0B2545]">How It Works</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {howDefaults.map((s) => (
+            <div key={s.n} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#0077C8]/10 text-[#0077C8]">
+                <s.icon className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-bold text-[#0B2545]">{s.n}. {s.title}</p>
+              <p className="mt-1 text-xs text-slate-500">{s.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section id="how-it-works" className="bg-white py-16">
-        <div className="mx-auto max-w-4xl px-4">
-          <h2 className="mb-10 text-center text-2xl font-bold text-[#0B2545]">
-            {howItWorksTitle}
-          </h2>
-          <div className="grid gap-5 sm:grid-cols-3">
-            {howItWorksSteps.map((s) => (
-              <div
-                key={s.n}
-                className="relative rounded-2xl border border-slate-100 bg-[#F8FBFE] p-6 text-center shadow-sm"
-              >
-                <div className="absolute -top-3 left-1/2 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full bg-[#0077C8] text-xs font-bold text-white">
-                  {s.n}
-                </div>
-                <div className="mx-auto mb-3 mt-2 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-                  <s.icon className="h-6 w-6 text-[#0077C8]" />
-                </div>
-                <h3 className="font-semibold text-[#0B2545]">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                  {s.desc}
-                </p>
+      <section className="bg-white py-12">
+        <div className="mx-auto max-w-5xl px-4">
+          <h2 className="mb-6 text-center text-xl font-bold text-[#0B2545]">Why BuyWater</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {whyDefaults.map((w) => (
+              <div key={w.title} className="rounded-2xl border border-slate-100 bg-[#EEF6FC] p-5">
+                <w.icon className="mb-2 h-6 w-6 text-[#0077C8]" />
+                <p className="text-sm font-bold text-[#0B2545]">{w.title}</p>
+                <p className="mt-1 text-xs text-slate-500">{w.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="features" className="bg-[#F0F7FC] py-16">
-        <div className="mx-auto max-w-4xl px-4">
-          <div className="mb-2 text-center">
-            <span className="rounded-full bg-[#0077C8]/10 px-3 py-1 text-xs font-semibold text-[#0077C8]">
-              {whyBadge}
-            </span>
-          </div>
-          <h2 className="mb-10 text-center text-2xl font-bold text-[#0B2545]">
-            {whyTitle}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {whyItems.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
-              >
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#0077C8]">
-                  <f.icon className="h-5 w-5 text-white" />
-                </div>
-                <h3 className="font-semibold text-[#0B2545]">{f.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="support" className="bg-white py-16">
-        <div className="mx-auto max-w-3xl px-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <a
-              href={adminPhoneDigits ? `https://wa.me/${adminPhoneDigits}` : "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-start gap-3 rounded-2xl border border-green-100 bg-[#F0FDF4] p-5 transition hover:shadow-md"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-500 text-white">
-                <MessageCircle className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#0B2545]">{supportWhatsApp.title}</p>
-                <p className="text-sm text-slate-600">{supportWhatsApp.desc}</p>
-              </div>
-            </a>
-            <a
-              href={`mailto:${settings?.adminEmail || "buywater.tamale@gmail.com"}`}
-              className="flex items-start gap-3 rounded-2xl border border-blue-100 bg-[#EFF6FF] p-5 transition hover:shadow-md"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0077C8] text-white">
-                <Mail className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#0B2545]">{supportEmail.title}</p>
-                <p className="text-sm text-slate-600">{supportEmail.desc}</p>
-              </div>
-            </a>
-            <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-600">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#0B2545]">{supportHours.title}</p>
-                <p className="text-sm text-slate-600">{supportHours.desc}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-[#FFFBEB] p-5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-white">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold text-[#0B2545]">{supportIssues.title}</p>
-                <p className="text-sm text-slate-600">{supportIssues.desc}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-gradient-to-b from-[#F0F7FC] to-white py-16 text-center">
-        <img
-          src="/logo.jpg"
-          alt="BuyWater"
-          className="mx-auto mb-4 h-16 w-16 rounded-full object-cover shadow"
-        />
-        <h2 className="text-2xl font-bold text-[#0B2545] sm:text-3xl">
-          {ctaTitle}
-        </h2>
-        <p className="mx-auto mt-2 max-w-md px-4 text-sm text-slate-500">
-          {ctaSubtitle}
-        </p>
-        <Link href={orderHref} className={orderCtaClassBottom}>
-          <Droplets className="h-4 w-4" />
-          {ctaButtonText}
+      <section className="mx-auto max-w-5xl px-4 py-12 text-center">
+        <h2 className="text-xl font-bold text-[#0B2545]">{ctaCfg.title || "Ready for fresh water?"}</h2>
+        <p className="mt-2 text-sm text-slate-500">{ctaCfg.subtitle || productDesc}</p>
+        <Link
+          href="/order"
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0077C8] px-6 py-3 text-sm font-semibold text-white shadow hover:bg-[#0066AD]"
+        >
+          {ctaText} <ArrowRight className="h-4 w-4" />
         </Link>
       </section>
-
-      <footer className="bg-[#0B2545] py-10 text-center text-white">
-        <div className="mx-auto flex max-w-lg flex-col items-center gap-2 px-4">
-          <div className="mb-1 flex items-center gap-2">
-            <img
-              src="/logo.jpg"
-              alt={footerBrand}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-            <span className="font-semibold">{footerBrand}</span>
-          </div>
-          <p className="text-sm text-white/70">{footerLocation}</p>
-          <p className="text-sm text-white/70">{footerContact}</p>
-          <p className="mt-3 text-xs text-white/40">
-            © {new Date().getFullYear()} {footerCopyright}
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
