@@ -13,7 +13,7 @@
     "db:push": "prisma db push",
     "db:seed": "node scripts/seed.js",
     "db:setup": "prisma generate && prisma db push && node scripts/seed.js",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && node scripts/optimize-images.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
