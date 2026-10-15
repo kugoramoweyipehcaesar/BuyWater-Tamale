@@ -1,13 +1,36 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, cacheGet, cacheSet, cacheDel } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+
+export const revalidate = 60;
 
 export async function GET() {
   try {
+    const hit = cacheGet("products:all");
+    if (hit) {
+      return NextResponse.json(
+        { products: hit },
+        {
+          headers: {
+            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+            "X-Cache": "HIT",
+          },
+        }
+      );
+    }
     const products = await prisma.product.findMany({
       orderBy: { createdAt: "desc" },
     });
-    return NextResponse.json({ products });
+    cacheSet("products:all", products, 60_000);
+    return NextResponse.json(
+      { products },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          "X-Cache": "MISS",
+        },
+      }
+    );
   } catch (e) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
@@ -27,6 +50,7 @@ export async function POST(request) {
         stock: Number(body.stock) || 100,
       },
     });
+    cacheDel("products:");
     return NextResponse.json({ product }, { status: 201 });
   } catch (e) {
     const status = e.status || 500;

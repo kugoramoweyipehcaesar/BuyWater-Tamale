@@ -18,10 +18,14 @@ function isAdminRole(role) {
   return ADMIN_ROLES.includes(String(role || "").toUpperCase());
 }
 
+/**
+ * Fast middleware: no Prisma / no internal fetch on every request.
+ * Maintenance is enforced client-side + on sensitive API routes.
+ * Rider→admin redirect stays (JWT decode only, no DB).
+ */
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Block common attack paths
   if (
     pathname.startsWith("/.env") ||
     pathname.includes("wp-admin") ||
@@ -31,53 +35,27 @@ export async function middleware(request) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  // Riders cannot access admin UI — send them to /rider
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/icons") ||
+    pathname === "/favicon.ico" ||
+    pathname.endsWith(".jpg") ||
+    pathname.endsWith(".webp") ||
+    pathname.endsWith(".png") ||
+    pathname.endsWith(".svg") ||
+    pathname.endsWith(".js") ||
+    pathname.endsWith(".css") ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js"
+  ) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin-login")) {
     const token = request.cookies.get(TOKEN_NAME)?.value;
     const payload = token ? decodeJwtPayload(token) : null;
     if (String(payload?.role || "").toUpperCase() === "RIDER") {
       return NextResponse.redirect(new URL("/rider", request.url));
-    }
-  }
-
-  // Skip maintenance gate for these paths
-  const skip =
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/maintenance") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/admin-login") ||
-    pathname.startsWith("/rider") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password") ||
-    pathname === "/favicon.ico" ||
-    pathname.startsWith("/logo") ||
-    pathname.startsWith("/product") ||
-    pathname.startsWith("/uploads");
-
-  if (!skip) {
-    try {
-      const origin = request.nextUrl.origin;
-      const res = await fetch(`${origin}/api/settings`, {
-        headers: { "x-middleware-check": "1" },
-        cache: "no-store",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.settings?.maintenanceMode) {
-          const token = request.cookies.get(TOKEN_NAME)?.value;
-          const payload = token ? decodeJwtPayload(token) : null;
-          // Allow both ADMIN and SUPER_ADMIN through maintenance
-          if (!isAdminRole(payload?.role)) {
-            return NextResponse.redirect(new URL("/maintenance", request.url));
-          }
-        }
-      }
-    } catch (e) {
-      // Don't block site if settings fetch fails
-      console.warn("middleware maintenance check failed", e?.message);
     }
   }
 
