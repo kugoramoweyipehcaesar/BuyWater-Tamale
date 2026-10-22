@@ -48,6 +48,7 @@ export default function UserDirectoryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState(null);
+  const [photoView, setPhotoView] = useState(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -249,8 +250,35 @@ export default function UserDirectoryPage() {
                   {users.map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-950/50">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-black dark:text-zinc-100">{u.name || u.username || "—"}</p>
-                        <p className="text-xs text-slate-500">{u.email}</p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (u.profilePhoto) setPhotoView(u);
+                              else setSelected(u);
+                            }}
+                            className="shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0077C8]/40"
+                            title={u.profilePhoto ? "View profile photo" : "No photo — open details"}
+                          >
+                            {u.profilePhoto ? (
+                              <img
+                                src={u.profilePhoto}
+                                alt=""
+                                className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-200 dark:ring-zinc-700"
+                              />
+                            ) : (
+                              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-zinc-800">
+                                <Users className="h-4 w-4" />
+                              </span>
+                            )}
+                          </button>
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-black dark:text-zinc-100">
+                              {u.name || u.username || "—"}
+                            </p>
+                            <p className="truncate text-xs text-slate-500">{u.email}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-zinc-300">{u.phone || "—"}</td>
                       <td className="px-4 py-3"><RoleBadge role={u.role} /></td>
@@ -289,10 +317,36 @@ export default function UserDirectoryPage() {
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-4 sm:items-center" onClick={() => setSelected(null)}>
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-zinc-900" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-start justify-between">
-              <div>
-                <p className="font-bold text-black dark:text-zinc-100">{selected.name || selected.username}</p>
-                <p className="text-sm text-slate-500">{selected.email}</p>
-                <div className="mt-1"><RoleBadge role={selected.role} /></div>
+              <div className="flex items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => selected.profilePhoto && setPhotoView(selected)}
+                  className="shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-[#0077C8]/40"
+                  title={selected.profilePhoto ? "View full photo" : "No photo"}
+                >
+                  {selected.profilePhoto ? (
+                    <img
+                      src={selected.profilePhoto}
+                      alt=""
+                      className="h-14 w-14 rounded-full object-cover ring-2 ring-[#0077C8]/30"
+                    />
+                  ) : (
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-zinc-800">
+                      <Users className="h-6 w-6" />
+                    </span>
+                  )}
+                </button>
+                <div>
+                  <p className="font-bold text-black dark:text-zinc-100">{selected.name || selected.username}</p>
+                  <p className="text-sm text-slate-500">{selected.email}</p>
+                  <div className="mt-1"><RoleBadge role={selected.role} /></div>
+                  {selected.phone ? (
+                    <p className="mt-1 text-xs text-slate-500">Phone: {selected.phone}</p>
+                  ) : null}
+                  {selected.hostel ? (
+                    <p className="text-xs text-slate-500">Hostel: {selected.hostel}</p>
+                  ) : null}
+                </div>
               </div>
               <button type="button" onClick={() => setSelected(null)}><X className="h-5 w-5 text-slate-400" /></button>
             </div>
@@ -323,6 +377,46 @@ export default function UserDirectoryPage() {
                 <p className="rounded-xl bg-violet-50 px-3 py-2 text-xs text-violet-800">Super admin is protected — cannot ban or change role.</p>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {photoView && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setPhotoView(null)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-2xl bg-white p-4 shadow-2xl dark:bg-zinc-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPhotoView(null)}
+              className="absolute right-3 top-3 z-10 rounded-lg bg-black/40 p-1.5 text-white hover:bg-black/60"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <img
+              src={photoView.profilePhoto}
+              alt={photoView.name || photoView.username || "Profile"}
+              className="mx-auto max-h-[70vh] w-full rounded-xl object-contain"
+            />
+            <p className="mt-3 text-center text-sm font-semibold text-[#0B2545] dark:text-zinc-100">
+              {photoView.name || photoView.username || "User"}
+            </p>
+            <p className="text-center text-xs text-slate-500">{photoView.email}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelected(photoView);
+                setPhotoView(null);
+              }}
+              className="mt-3 w-full rounded-xl bg-[#0077C8] py-2.5 text-sm font-semibold text-white"
+            >
+              View user details
+            </button>
           </div>
         </div>
       )}
