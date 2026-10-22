@@ -33,14 +33,22 @@ export default function HomePage() {
   const [settings, setSettings] = useState(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => setUser(d.user))
-      .catch(() => {});
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((d) => setSettings(d.settings))
-      .catch(() => {});
+    function load() {
+      fetch("/api/auth/me")
+        .then((r) => r.json())
+        .then((d) => setUser(d.user))
+        .catch(() => {});
+      fetch("/api/settings")
+        .then((r) => r.json())
+        .then((d) => setSettings(d.settings))
+        .catch(() => {});
+    }
+    load();
+    function onVis() {
+      if (document.visibilityState === "visible") load();
+    }
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
   const price = settings?.pricePerGallon ?? 2.5;
@@ -83,8 +91,7 @@ export default function HomePage() {
     },
   ];
   const howCfg = settings?.howItWorks;
-  const howItWorksTitle =
-    (howCfg && howCfg.sectionTitle) || "How It Works";
+  const howItWorksTitle = (howCfg && howCfg.sectionTitle) || "How It Works";
   const howIcons = [ClipboardList, CreditCard, Truck];
   const howItWorksSteps = howDefaults.map((d, i) => {
     const c = howCfg?.steps?.[i];
@@ -178,9 +185,17 @@ export default function HomePage() {
     `Call / WhatsApp: ${call1} / ${call2}`;
   const footerCopyright =
     footerCfg.copyrightLine || "BuyWater. Fresh Water Delivered.";
+  const productCfg = settings?.productSection || {};
+  const productTitle =
+    productCfg.sectionTitle || "Premium 20-Liter Water Gallons";
   const productDesc =
+    productCfg.description ||
     settings?.productDescription ||
     "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.";
+  const productTags =
+    Array.isArray(productCfg.tags) && productCfg.tags.filter(Boolean).length
+      ? productCfg.tags.filter(Boolean)
+      : ["Fast Delivery", "Fresh & Clean", "Trusted Service"];
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -266,9 +281,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-[#F0F7FC] py-14 text-center">
-        <h2 className="text-2xl font-bold text-[#0B2545]">
-          Premium 20-Liter Water Gallons
-        </h2>
+        <h2 className="text-2xl font-bold text-[#0B2545]">{productTitle}</h2>
         <p className="mx-auto mt-2 max-w-xl px-4 text-sm text-slate-500">
           {productDesc}
         </p>
@@ -281,15 +294,18 @@ export default function HomePage() {
           </span>
         </div>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
-          <span className="inline-flex items-center gap-1.5">
-            <Truck className="h-4 w-4 text-[#0077C8]" /> Fast Delivery
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-[#0077C8]" /> Fresh & Clean
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Shield className="h-4 w-4 text-[#0077C8]" /> Trusted Service
-          </span>
+          {productTags.map((tag, i) => (
+            <span key={i} className="inline-flex items-center gap-1.5">
+              {i === 0 ? (
+                <Truck className="h-4 w-4 text-[#0077C8]" />
+              ) : i === 1 ? (
+                <Sparkles className="h-4 w-4 text-[#0077C8]" />
+              ) : (
+                <Shield className="h-4 w-4 text-[#0077C8]" />
+              )}{" "}
+              {tag}
+            </span>
+          ))}
         </div>
       </section>
 
