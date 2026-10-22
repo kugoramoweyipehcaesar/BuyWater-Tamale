@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken, TOKEN_NAME } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLogger";
 import { clientIp } from "@/lib/security";
+import { notifyAdminSignup } from "@/lib/email";
 
 export async function POST(request) {
   try {
@@ -58,6 +59,15 @@ export async function POST(request) {
       details: `New account · ${name || email}`,
       ip,
     });
+
+    // Immediate alert to super admin
+    notifyAdminSignup({
+      email: user.email,
+      name: user.name || user.username,
+      phone: user.phone,
+      when: new Date().toLocaleString(),
+      ip,
+    }).catch((e) => console.error("[register] notifyAdminSignup", e?.message || e));
 
     const token = signToken(user);
     const safeUser = {

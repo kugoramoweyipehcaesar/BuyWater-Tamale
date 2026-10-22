@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, requireAdmin, isAdminRole } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLogger";
+import { notifyAdminComplaint } from "@/lib/email";
 
 export async function GET() {
   try {
@@ -23,7 +24,6 @@ export async function POST(request) {
     if (!user) {
       return NextResponse.json({ error: "Login required" }, { status: 401 });
     }
-    // Complaints are for regular users only — not admin profiles
     if (isAdminRole(user.role)) {
       return NextResponse.json(
         { error: "Admins cannot submit complaints from their profile" },
@@ -57,6 +57,13 @@ export async function POST(request) {
       action: "COMPLAINT_SUBMITTED",
       details: `Complaint from ${user.name || user.username || user.email}: ${message.slice(0, 120)}`,
     }).catch(() => {});
+
+    notifyAdminComplaint({
+      email: user.email,
+      name: user.name || user.username,
+      message,
+      when: new Date().toLocaleString(),
+    }).catch((e) => console.error("[feedback] notifyAdminComplaint", e?.message || e));
 
     return NextResponse.json({ success: true, complaint: row }, { status: 201 });
   } catch (e) {

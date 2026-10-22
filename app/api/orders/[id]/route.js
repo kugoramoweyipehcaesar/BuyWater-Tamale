@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, requireAdmin } from "@/lib/auth";
-import { notifyAdminOrderCancelled } from "@/lib/email";
+import { notifyAdminOrderCancelled, notifyAdminPaymentConfirmed } from "@/lib/email";
 import { logActivity } from "@/lib/activityLogger";
 import { clientIp } from "@/lib/security";
 
@@ -96,7 +96,6 @@ export async function PATCH(request, { params }) {
     if (isStaff) {
       if (body.driverName != null) data.driverName = body.driverName;
       if (body.driverPhone != null) data.driverPhone = body.driverPhone;
-      // Confirm payment via notes only (no DB column)
       if (body.paymentConfirmed === true) {
         let n = String(
           data.notes != null ? data.notes : existing.notes || ""
@@ -137,6 +136,13 @@ export async function PATCH(request, { params }) {
         details: `MoMo payment confirmed for ${order.orderNumber}`,
         ip,
       }).catch(() => {});
+      try {
+        emailResult = await notifyAdminPaymentConfirmed(order);
+        console.log("[orders] payment confirmed notify:", emailResult);
+      } catch (err) {
+        console.error("[orders] payment confirmed notify error:", err?.message || err);
+        emailResult = { ok: false, error: err?.message || "email error" };
+      }
     } else if (data.status) {
       await logActivity({
         userId: user.id,
