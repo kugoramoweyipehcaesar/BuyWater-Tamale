@@ -100,7 +100,9 @@ export default function AdminLayout({ children }) {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <main className="flex min-w-0 flex-1 flex-col">
+        {children}
+      </main>
     </div>
   );
 }
