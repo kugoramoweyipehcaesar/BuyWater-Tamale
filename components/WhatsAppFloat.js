@@ -6,11 +6,6 @@ import { usePathname } from "next/navigation";
 const GROUP_URL = "https://chat.whatsapp.com/B8elcmVfb2J0F9gQktYUaF";
 const STORAGE_KEY = "buywater_wa_float_pos";
 
-// Processed user WhatsApp icon (white bg removed, soft circular blend)
-const WA_ICON =
-  "data:image/png;base64," +
-  "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDRmHbAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF+mlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZUhGc0V4cGJhZ1JnQiI/Pgo8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvLyIgeDp4bXB0az0iWE1QIENvcmUgNi4wLjAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iCiAgICAgICAgICB4bWxuczpleGlmPSJodHRwOi8vbnMuYWRvYmUuY29tL2V4aWYvMS4wLyI+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9uPjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgICAgIDxleGlmOlBpeGVsWERpbWVuc2lvbj4xMjg8L2V4aWY6UGl4ZWxYRGltZW5zaW9uPgogICAgICAgICA8ZXhpZjpQaXhlbFlEaW1lbnNpb24+MTI4PC9leGlmOlBpeGVsWURpbWVuc2lvbj4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InIiPz5hS6weAAAHVklEQVR4nO2dW4hVVRjHf2cmZ0YzzUzN8pJZ2UWpLCsp6EJBGURF0ENFD0FQ0EvQQ1AP0UPQQ9BDEARBEFEQRBFEEEQRRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRRBEEEQQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRRBEEEQQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRBBEEEUQRRBEEEQQRBBEEEUQRBBEEEUQRBBEEEUQ/wMAAP//AwANLwGAfQAAAAAASUVORK5CYII=";
-
 export default function WhatsAppFloat() {
   const path = usePathname();
   const [pos, setPos] = useState({ x: null, y: null });
@@ -117,7 +112,7 @@ export default function WhatsAppFloat() {
       <span className="wa-float-ring" aria-hidden="true" />
       <span className="wa-float-disc" aria-hidden="true" />
       <img
-        src={WA_ICON}
+        src="/whatsapp-float.svg"
         alt="WhatsApp"
         draggable={false}
         width={56}
