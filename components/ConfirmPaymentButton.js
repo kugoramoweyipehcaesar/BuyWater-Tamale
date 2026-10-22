@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 
 /**
- * Super-admin control: confirm MoMo payment received → status becomes PENDING
- * so the order can continue PENDING → PROCESSING → CONFIRMED → …
+ * Super-admin control: confirm MoMo payment received → notes get PAYMENT_CONFIRMED
+ * and status becomes PENDING so the user track page can show "MoMo confirmed" immediately.
  */
 export default function ConfirmPaymentButton({ orderId, onConfirmed, className = "" }) {
   const [busy, setBusy] = useState(false);
@@ -19,7 +19,7 @@ export default function ConfirmPaymentButton({ orderId, onConfirmed, className =
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "PENDING" }),
+        body: JSON.stringify({ status: "PENDING", paymentConfirmed: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Confirm failed");
