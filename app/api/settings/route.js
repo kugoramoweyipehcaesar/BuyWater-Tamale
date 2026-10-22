@@ -3,6 +3,9 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const ALLOWED = [
   "serviceActive",
   "maintenanceMode",
@@ -103,7 +106,16 @@ export async function GET() {
     if (!settings) {
       settings = await prisma.appSettings.create({ data: {} });
     }
-    return NextResponse.json({ settings: withExtras(settings) });
+    return NextResponse.json(
+      { settings: withExtras(settings) },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (e) {
     console.error("settings GET", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -251,7 +263,14 @@ export async function PATCH(request) {
       console.warn("revalidatePath", e.message);
     }
 
-    return NextResponse.json({ settings: withExtras(settings), success: true, live: true });
+    return NextResponse.json(
+      { settings: withExtras(settings), success: true, live: true },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        },
+      }
+    );
   } catch (e) {
     console.error("settings PATCH", e);
     const status = e.status || 500;
