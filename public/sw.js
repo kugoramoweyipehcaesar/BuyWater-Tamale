@@ -1,6 +1,6 @@
 /* BuyWater Tamale – Service Worker */
-const CACHE = "buywater-v2";
-const PRECACHE = ["/", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE = "buywater-v4";
+const PRECACHE = ["/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -26,14 +26,26 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+
+  // Never intercept API – always network
   if (url.pathname.startsWith("/api/")) return;
 
-  if (req.mode === "navigate") {
+  // Navigations & Next.js assets: network-first so admin content updates show immediately
+  const isNavigate = req.mode === "navigate";
+  const isNextAsset =
+    url.pathname.startsWith("/_next/") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css");
+
+  if (isNavigate || isNextAsset) {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          // Do not cache HTML navigations – always prefer live server response
+          if (!isNavigate && res.ok && url.origin === self.location.origin) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
           return res;
         })
         .catch(() =>
@@ -43,46 +55,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Other static assets: network-first with cache fallback
   event.respondWith(
-    caches.match(req).then((hit) => {
-      if (hit) return hit;
-      return fetch(req)
-        .then((res) => {
-          if (res.ok && url.origin === self.location.origin) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() => hit);
-    })
-  );
-});
-
-self.addEventListener("message", (event) => {
-  const data = event.data || {};
-  if (data.type === "NOTIFY" && data.title) {
-    self.registration.showNotification(data.title, {
-      body: data.body || "",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      data: data.url ? { url: data.url } : undefined,
-    });
-  }
-});
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/";
-  event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
-      for (const c of list) {
-        if ("focus" in c) {
-          c.navigate(url);
-          return c.focus();
+    fetch(req)
+      .then((res) => {
+        if (res.ok && url.origin === self.location.origin) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         }
-      }
-      if (clients.openWindow) return clients.openWindow(url);
-    })
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
