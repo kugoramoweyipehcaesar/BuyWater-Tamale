@@ -17,6 +17,18 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+function momoAccounts(settings) {
+  const list = [
+    { number: settings?.momoNumber, name: settings?.momoName, label: "Account 1" },
+    { number: settings?.momoNumber2, name: settings?.momoName2, label: "Account 2" },
+    { number: settings?.momoNumber3, name: settings?.momoName3, label: "Account 3" },
+  ].filter((a) => a.number && String(a.number).trim());
+  if (!list.length) {
+    return [{ number: "0531448824", name: "BuyWater", label: "Account 1" }];
+  }
+  return list;
+}
+
 export default function OrderPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -210,6 +222,8 @@ export default function OrderPage() {
     );
   }
 
+  const accounts = momoAccounts(settings);
+
   return (
     <div className="min-h-screen bg-[#EEF6FC] pb-12">
       <SiteHeader user={user} />
@@ -283,7 +297,7 @@ export default function OrderPage() {
               <BadgePercent className="h-4 w-4" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-black">Subscribe & Save</p>
+              <p className="text-sm font-semibold text-black">Subscribe &amp; Save</p>
               <p className="text-xs text-slate-500">{subGallons} gallons for Ghc{subPrice}</p>
             </div>
           </button>
@@ -329,8 +343,16 @@ export default function OrderPage() {
             <div className="mb-4 space-y-3">
               <div className="rounded-xl border-2 border-[#0077C8] bg-sky-50 px-4 py-3 shadow-sm">
                 <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#0077C8]">Send Mobile Money to</p>
-                <p className="text-lg font-bold tracking-wide text-black">{settings?.momoNumber || "0531448824"}</p>
-                <p className="text-sm text-slate-800">Name: <span className="font-semibold">{settings?.momoName || "BuyWater"}</span></p>
+                <div className="space-y-3">
+                  {accounts.map((acc, idx) => (
+                    <div key={idx} className={idx > 0 ? "border-t border-sky-200 pt-2" : ""}>
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{acc.label}</p>
+                      <p className="text-lg font-bold tracking-wide text-black">{acc.number}</p>
+                      <p className="text-sm text-slate-800">Name: <span className="font-semibold">{acc.name || "BuyWater"}</span></p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-slate-600">After paying, enter your sender number and reference below so we can confirm.</p>
               </div>
               <label className="block text-xs font-medium text-slate-600">Your MoMo number (exactly 10 digits)</label>
               <input required type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} value={momoNumber} onChange={(e) => setMomoNumber(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="e.g. 0241234567" className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" />
