@@ -36,11 +36,18 @@ const DEFAULT_SUPPORT = {
   issues: { title: "Issues?", desc: "Late delivery, wrong hostel — report from your Profile → Submit complaint" },
 };
 
+const DEFAULT_PRODUCT = {
+  sectionTitle: "Premium 20-Liter Water Gallons",
+  description: "Hygienically produced, affordably priced water gallons delivered fresh to your hostel door.",
+  tags: ["Fast Delivery", "Fresh & Clean", "Trusted Service"],
+};
+
 const TABS = [
+  { id: "product", label: "Product / Water", icon: Droplets },
   { id: "how", label: "How It Works", icon: ClipboardList },
   { id: "why", label: "Why Choose", icon: Sparkles },
   { id: "support", label: "Support", icon: MessageCircle },
-  { id: "cta", label: "CTA Section", icon: Droplets },
+  { id: "cta", label: "CTA Section", icon: Sparkles },
   { id: "footer", label: "Footer", icon: MapPin },
 ];
 
@@ -49,7 +56,10 @@ export default function AdminSiteContentPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
-  const [tab, setTab] = useState("how");
+  const [tab, setTab] = useState("product");
+  const [productTitle, setProductTitle] = useState(DEFAULT_PRODUCT.sectionTitle);
+  const [productDesc, setProductDesc] = useState(DEFAULT_PRODUCT.description);
+  const [productTags, setProductTags] = useState([...DEFAULT_PRODUCT.tags]);
   const [howTitle, setHowTitle] = useState("How It Works");
   const [howSteps, setHowSteps] = useState(DEFAULT_HOW_STEPS);
   const [whyBadge, setWhyBadge] = useState("Built for Students");
@@ -78,6 +88,13 @@ export default function AdminSiteContentPage() {
       }
       const set = await fetch("/api/settings").then((r) => r.json());
       const s = set.settings || {};
+      const prod = s.productSection || {};
+      if (prod.sectionTitle) setProductTitle(prod.sectionTitle);
+      if (prod.description) setProductDesc(prod.description);
+      else if (s.productDescription) setProductDesc(s.productDescription);
+      if (Array.isArray(prod.tags) && prod.tags.length) {
+        setProductTags([0, 1, 2].map((i) => prod.tags[i] || DEFAULT_PRODUCT.tags[i] || ""));
+      }
       const how = s.howItWorks || {};
       if (how.sectionTitle) setHowTitle(how.sectionTitle);
       if (Array.isArray(how.steps) && how.steps.length) {
@@ -134,7 +151,16 @@ export default function AdminSiteContentPage() {
     setBusy(true);
     try {
       let body = {};
-      if (tab === "how") body = { howItWorks: { sectionTitle: howTitle.trim() || "How It Works", steps: howSteps } };
+      if (tab === "product") {
+        body = {
+          productSection: {
+            sectionTitle: productTitle.trim() || DEFAULT_PRODUCT.sectionTitle,
+            description: productDesc.trim(),
+            tags: productTags.map((x) => String(x || "").trim()),
+          },
+          productDescription: productDesc.trim(),
+        };
+      } else if (tab === "how") body = { howItWorks: { sectionTitle: howTitle.trim() || "How It Works", steps: howSteps } };
       else if (tab === "why") body = { whyChoose: { badge: whyBadge.trim() || "Built for Students", sectionTitle: whyTitle.trim() || "Why Choose BuyWater", items: whyItems } };
       else if (tab === "support") body = { supportSection: supportForm };
       else if (tab === "cta") body = { ctaSection: { title: ctaTitle.trim() || "Thirsty? Get Water Now.", subtitle: ctaSubtitle.trim(), buttonText: ctaButtonText.trim() } };
@@ -154,6 +180,12 @@ export default function AdminSiteContentPage() {
     setBusy(true);
     try {
       const body = {
+        productSection: {
+          sectionTitle: productTitle.trim() || DEFAULT_PRODUCT.sectionTitle,
+          description: productDesc.trim(),
+          tags: productTags.map((x) => String(x || "").trim()),
+        },
+        productDescription: productDesc.trim(),
         howItWorks: { sectionTitle: howTitle.trim() || "How It Works", steps: howSteps },
         whyChoose: { badge: whyBadge.trim() || "Built for Students", sectionTitle: whyTitle.trim() || "Why Choose BuyWater", items: whyItems },
         supportSection: supportForm,
@@ -214,6 +246,31 @@ export default function AdminSiteContentPage() {
             );
           })}
         </div>
+
+        {tab === "product" && (
+          <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2"><Droplets className="h-5 w-5 text-[#0077C8]" /><h2 className="text-lg font-bold text-black">Product / Clean Water</h2></div>
+            <p className="text-xs text-slate-500">Edit the homepage product section: title, description (e.g. clean tap water), and feature tags.</p>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">Section title</label>
+              <input value={productTitle} onChange={(e) => setProductTitle(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" placeholder="Premium 20-Liter Water Gallons" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">Description</label>
+              <textarea rows={3} value={productDesc} onChange={(e) => setProductDesc(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" placeholder="Hygienically produced, clean tap water..." />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold text-slate-600">Feature tags (3)</label>
+              <div className="space-y-2">
+                {productTags.map((tag, i) => (
+                  <input key={i} value={tag} onChange={(e) => { const next = [...productTags]; next[i] = e.target.value; setProductTags(next); }} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" placeholder={DEFAULT_PRODUCT.tags[i] || `Tag ${i + 1}`} />
+                ))}
+              </div>
+            </div>
+            <button type="button" disabled={busy} onClick={saveCurrent} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0077C8] py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save product section — Live now</button>
+          </div>
+        )}
+
         {tab === "how" && (
           <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2"><ClipboardList className="h-5 w-5 text-[#0077C8]" /><h2 className="text-lg font-bold text-black">How It Works</h2></div>
@@ -230,6 +287,7 @@ export default function AdminSiteContentPage() {
             <button type="button" disabled={busy} onClick={saveCurrent} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0077C8] py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save How It Works — Live now</button>
           </div>
         )}
+
         {tab === "why" && (
           <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-[#0077C8]" /><h2 className="text-lg font-bold text-black">Why Choose BuyWater</h2></div>
@@ -249,6 +307,7 @@ export default function AdminSiteContentPage() {
             <button type="button" disabled={busy} onClick={saveCurrent} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0077C8] py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Why Choose — Live now</button>
           </div>
         )}
+
         {tab === "support" && (
           <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-[#0077C8]" /><h2 className="text-lg font-bold text-black">Support Section</h2></div>
@@ -264,6 +323,7 @@ export default function AdminSiteContentPage() {
             <button type="button" disabled={busy} onClick={saveCurrent} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0077C8] py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Support — Live now</button>
           </div>
         )}
+
         {tab === "cta" && (
           <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2"><Droplets className="h-5 w-5 text-[#0077C8]" /><h2 className="text-lg font-bold text-black">CTA Section</h2></div>
@@ -273,12 +333,13 @@ export default function AdminSiteContentPage() {
             <button type="button" disabled={busy} onClick={saveCurrent} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0077C8] py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save CTA — Live now</button>
           </div>
         )}
+
         {tab === "footer" && (
           <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2"><MapPin className="h-5 w-5 text-[#0077C8]" /><h2 className="text-lg font-bold text-black">Footer</h2></div>
             <div><label className="mb-1 block text-xs font-semibold text-slate-600">Brand name</label><input value={footerBrand} onChange={(e) => setFooterBrand(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" /></div>
             <div><label className="mb-1 block text-xs font-semibold text-slate-600">Location line</label><input value={footerLocation} onChange={(e) => setFooterLocation(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" /></div>
-            <div><label className="mb-1 block text-xs font-semibold text-slate-600">Contact line (optional)</label><input value={footerContact} onChange={(e) => setFooterContact(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" placeholder="e.g. Call / WhatsApp: 0531448824" /></div>
+            <div><label className="mb-1 block text-xs font-semibold text-slate-600">Contact line (optional)</label><input value={footerContact} onChange={(e) => setFooterContact(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" /></div>
             <div><label className="mb-1 block text-xs font-semibold text-slate-600">Copyright line</label><input value={footerCopyright} onChange={(e) => setFooterCopyright(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-black" /></div>
             <button type="button" disabled={busy} onClick={saveCurrent} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0077C8] py-3 text-sm font-semibold text-white disabled:opacity-60">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Footer — Live now</button>
           </div>
