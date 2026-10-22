@@ -65,23 +65,27 @@ export default function OrderQueuePage() {
   const load = useCallback(async () => {
     try {
       const me = await fetch("/api/auth/me").then((r) => r.json());
-      if (!me.user || me.user.role !== "ADMIN") {
+      if (!me.user || !["ADMIN", "SUPER_ADMIN"].includes(me.user.role)) {
         router.push("/admin-login");
         return;
       }
       setUser(me.user);
-      const res = await fetch("/api/orders?live=1").then((r) => r.json());
-      const list = res.orders || [];
-      if (!firstLoad.current) {
-        const newOnes = list.filter((o) => !knownIds.current.has(o.id));
-        if (newOnes.length) {
-          beep();
-          showToast(`${newOnes.length} new order(s)`);
+      try {
+        const res = await fetch("/api/orders?live=1").then((r) => r.json());
+        const list = res.orders || [];
+        if (!firstLoad.current) {
+          const newOnes = list.filter((o) => !knownIds.current.has(o.id));
+          if (newOnes.length) {
+            beep();
+            showToast(`${newOnes.length} new order(s)`);
+          }
         }
+        firstLoad.current = false;
+        knownIds.current = new Set(list.map((o) => o.id));
+        setOrders(list);
+      } catch (_) {
+        /* keep page; data refresh failed */
       }
-      firstLoad.current = false;
-      knownIds.current = new Set(list.map((o) => o.id));
-      setOrders(list);
     } catch {
       router.push("/admin-login");
     } finally {
