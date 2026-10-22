@@ -69,6 +69,8 @@ function withExtras(settings) {
     secondaryPhone,
     callNumber1: whatsappNumber,
     callNumber2: secondaryPhone,
+    momoNumber3: extra.momoNumber3 || settings.momoNumber3 || "",
+    momoName3: extra.momoName3 || settings.momoName3 || "",
     howItWorks: extra.howItWorks || null,
     whyChoose: extra.whyChoose || null,
     supportSection: extra.supportSection || null,
