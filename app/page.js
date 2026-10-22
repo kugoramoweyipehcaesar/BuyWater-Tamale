@@ -31,24 +31,36 @@ function toWhatsAppDigits(phone) {
 export default function HomePage() {
   const [user, setUser] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    function load() {
-      fetch("/api/auth/me")
-        .then((r) => r.json())
-        .then((d) => setUser(d.user))
-        .catch(() => {});
-      fetch("/api/settings")
-        .then((r) => r.json())
-        .then((d) => setSettings(d.settings))
-        .catch(() => {});
+    let cancelled = false;
+    async function load() {
+      try {
+        const [meRes, setRes] = await Promise.all([
+          fetch("/api/auth/me", { cache: "no-store" }),
+          fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" }),
+        ]);
+        const me = await meRes.json().catch(() => ({}));
+        const set = await setRes.json().catch(() => ({}));
+        if (cancelled) return;
+        setUser(me.user || null);
+        setSettings(set.settings || null);
+      } catch {
+        /* ignore */
+      } finally {
+        if (!cancelled) setReady(true);
+      }
     }
     load();
     function onVis() {
       if (document.visibilityState === "visible") load();
     }
     document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, []);
 
   const price = settings?.pricePerGallon ?? 2.5;
@@ -212,6 +224,14 @@ export default function HomePage() {
     "inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0077C8] shadow hover:bg-slate-50";
   const orderCtaClassBottom =
     "mt-6 inline-flex items-center gap-2 rounded-full bg-[#0077C8] px-8 py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-[#0066AD]";
+
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F0F7FC] text-slate-500">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0077C8] border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F0F7FC]">
