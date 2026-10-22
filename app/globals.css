@@ -100,18 +100,32 @@ html.dark textarea::placeholder {
 .wa-float-btn {
   animation: wa-float-bob 2.4s ease-in-out infinite;
   will-change: transform;
+  background: transparent;
+  border-radius: 9999px;
 }
 
 .wa-float-btn:hover {
   transform: scale(1.06);
 }
 
+/* Soft pulse ring — blends with page (sky / white) */
 .wa-float-ring {
   position: absolute;
-  inset: 0;
+  inset: -4px;
   border-radius: 9999px;
-  background: #25d366;
+  background: radial-gradient(circle, rgba(37, 211, 102, 0.35) 0%, rgba(37, 211, 102, 0) 70%);
   z-index: 0;
   pointer-events: none;
   animation: wa-float-pulse 2.4s ease-out infinite;
+}
+
+/* Subtle disc under icon so transparent PNG blends on any bg */
+.wa-float-disc {
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 40% 35%, #ffffff 0%, #f0fdf4 55%, #dcfce7 100%);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(37, 211, 102, 0.15);
+  z-index: 0;
+  pointer-events: none;
 }
