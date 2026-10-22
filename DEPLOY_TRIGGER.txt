@@ -1,3 +1,2 @@
-Redeploy trigger: 2026-10-22T08:01Z
-MoMo confirmed on track page (poll 5s)
-Thank you + flying petals after every order
+Redeploy trigger: 2026-10-22T08:20Z
+Super admin email alerts: orders, logins, signups, complaints, MoMo confirmed
