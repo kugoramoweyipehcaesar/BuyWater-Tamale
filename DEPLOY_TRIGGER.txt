@@ -1,4 +1,3 @@
-Redeploy trigger: 2026-10-06T07:59Z
-Header: photo + username right
-Profile: email + delete account restored
-MoMo: 10 digits required
+Redeploy trigger: 2026-10-22T08:01Z
+MoMo confirmed on track page (poll 5s)
+Thank you + flying petals after every order
