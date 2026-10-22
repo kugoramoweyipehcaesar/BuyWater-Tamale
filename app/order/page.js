@@ -210,13 +210,11 @@ export default function OrderPage() {
     }
   }
 
-  if (loading) {
+  // Do not render any prices/content until fresh settings arrive
+  if (loading || !settings) {
     return (
-      <div className="min-h-screen bg-[#EEF6FC]">
-        <SiteHeader user={user} />
-        <div className="flex items-center justify-center py-24 text-slate-500">
-          <Loader2 className="h-8 w-8 animate-spin text-[#0077C8]" />
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#EEF6FC]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#0077C8]" />
       </div>
     );
   }
