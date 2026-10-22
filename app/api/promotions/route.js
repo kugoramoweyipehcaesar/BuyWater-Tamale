@@ -4,28 +4,17 @@ import { requireAdmin, getCurrentUser } from "@/lib/auth";
 
 async function userAlreadyRedeemed(promoId, code, user) {
   if (!user?.id) return false;
-
   try {
     const row = await prisma.promoRedemption.findUnique({
-      where: {
-        promoId_userId: { promoId, userId: user.id },
-      },
+      where: { promoId_userId: { promoId, userId: user.id } },
     });
     if (row) return true;
-  } catch (_) {
-    // Table may not exist until migrate
-  }
-
+  } catch (_) {}
   try {
     const prior = await prisma.order.findFirst({
       where: {
         AND: [
-          {
-            OR: [
-              { userId: user.id },
-              ...(user.email ? [{ email: user.email }] : []),
-            ],
-          },
+          { OR: [{ userId: user.id }, ...(user.email ? [{ email: user.email }] : [])] },
           { notes: { contains: `Promo: ${code}` } },
         ],
       },
@@ -33,7 +22,6 @@ async function userAlreadyRedeemed(promoId, code, user) {
     });
     if (prior) return true;
   } catch (_) {}
-
   return false;
 }
 
@@ -52,27 +40,27 @@ export async function GET(request) {
       if (promo.maxUses && promo.timesUsed >= promo.maxUses) {
         return NextResponse.json({ error: "Promo code fully used" }, { status: 400 });
       }
-
       const user = await getCurrentUser();
       if (!user) {
-        return NextResponse.json(
-          { error: "Login required to apply a promo code" },
-          { status: 401 }
-        );
+        return NextResponse.json({ error: "Login required to apply a promo code" }, { status: 401 });
       }
-
       if (await userAlreadyRedeemed(promo.id, promo.code, user)) {
-        return NextResponse.json(
-          {
-            error:
-              "You have already used this promo code. Each user can claim it only once.",
-          },
-          { status: 400 }
-        );
+        return NextResponse.json({
+          error: "You have already used this promo code. Each user can claim it only once.",
+        }, { status: 400 });
       }
-
-      return NextResponse.json({ promo });
+      // Hide usage counts from end users
+      return NextResponse.json({
+        promo: {
+          id: promo.id,
+          code: promo.code,
+          rewardValue: promo.rewardValue,
+          maxUses: promo.maxUses,
+          active: promo.active,
+        },
+      });
     }
+    await requireAdmin();
     const promos = await prisma.promotionCode.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -107,13 +95,11 @@ export async function POST(request) {
 export async function PATCH(request) {
   try {
     const body = await request.json();
-
     if (body.redeem && body.id) {
       const user = await getCurrentUser();
       if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
-
       const promo = await prisma.promotionCode.findUnique({ where: { id: body.id } });
       if (!promo || !promo.active) {
         return NextResponse.json({ error: "Invalid promo" }, { status: 404 });
@@ -121,40 +107,25 @@ export async function PATCH(request) {
       if (promo.maxUses && promo.timesUsed >= promo.maxUses) {
         return NextResponse.json({ error: "Promo code fully used" }, { status: 400 });
       }
-
       if (await userAlreadyRedeemed(promo.id, promo.code, user)) {
-        return NextResponse.json(
-          { error: "You have already used this promo code" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "You have already used this promo code" }, { status: 400 });
       }
-
       try {
         await prisma.promoRedemption.create({
-          data: {
-            promoId: promo.id,
-            userId: user.id,
-            orderId: body.orderId || null,
-            code: promo.code,
-          },
+          data: { promoId: promo.id, userId: user.id, orderId: body.orderId || null, code: promo.code },
         });
       } catch (e) {
         if (String(e.code) === "P2002") {
-          return NextResponse.json(
-            { error: "You have already used this promo code" },
-            { status: 400 }
-          );
+          return NextResponse.json({ error: "You have already used this promo code" }, { status: 400 });
         }
         console.warn("promoRedemption create", e.message);
       }
-
       const updated = await prisma.promotionCode.update({
         where: { id: promo.id },
         data: { timesUsed: { increment: 1 } },
       });
       return NextResponse.json({ promo: updated, redeemed: true });
     }
-
     await requireAdmin();
     const promo = await prisma.promotionCode.update({
       where: { id: body.id },
