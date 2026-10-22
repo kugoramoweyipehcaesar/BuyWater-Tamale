@@ -76,6 +76,7 @@ function withExtras(settings) {
     supportSection: extra.supportSection || null,
     ctaSection: extra.ctaSection || null,
     footerSection: extra.footerSection || null,
+    productSection: extra.productSection || null,
   };
 }
 
@@ -98,30 +99,9 @@ function pick(body) {
 
 export async function GET() {
   try {
-    let settings = await prisma.appSettings.findFirst({
-      orderBy: { id: "asc" },
-    });
+    let settings = await prisma.appSettings.findFirst();
     if (!settings) {
-      settings = await prisma.appSettings.create({
-        data: {
-          serviceActive: true,
-          pricePerGallon: 2.5,
-          subscriptionPrice: 22,
-          subscriptionGallons: 10,
-          gallonSize: 20,
-          deliveryTimeMin: 45,
-          deliveryTimeMax: 60,
-          operatingHours: "7 AM - 8:30 PM DAILY",
-          heroTitle: "Fresh Water Delivered",
-          serviceArea: "Tamale UDS and environs",
-          adminPhone: "0531448824",
-          momoNumber: "0502748671",
-          contentJson: JSON.stringify({
-            whatsappNumber: "0531448824",
-            secondaryPhone: "0594963356",
-          }),
-        },
-      });
+      settings = await prisma.appSettings.create({ data: {} });
     }
     return NextResponse.json({ settings: withExtras(settings) });
   } catch (e) {
@@ -136,16 +116,8 @@ export async function PATCH(request) {
     const raw = await request.json();
     const body = pick(raw);
 
-    let settingsRow = await prisma.appSettings.findFirst({ orderBy: { id: "asc" } });
+    let settingsRow = await prisma.appSettings.findFirst();
     const extra = parseExtra(settingsRow?.contentJson);
-
-    if (raw.outOfStock !== undefined) {
-      extra.outOfStock =
-        raw.outOfStock === true ||
-        raw.outOfStock === "true" ||
-        raw.outOfStock === 1 ||
-        raw.outOfStock === "1";
-    }
 
     if (raw.whatsappNumber !== undefined) {
       extra.whatsappNumber = String(raw.whatsappNumber || "").trim();
@@ -239,6 +211,19 @@ export async function PATCH(request) {
         const incoming = JSON.parse(raw.contentJson);
         Object.assign(extra, incoming);
       } catch (_) {}
+    }
+
+    if (raw.productSection !== undefined) {
+      const p = raw.productSection || {};
+      const tags = Array.isArray(p.tags) ? p.tags : [];
+      extra.productSection = {
+        sectionTitle: String(p.sectionTitle || "Premium 20-Liter Water Gallons").slice(0, 120),
+        description: String(p.description || "").slice(0, 500),
+        tags: [0, 1, 2].map((i) => String(tags[i] || "").slice(0, 40)),
+      };
+      if (extra.productSection.description) {
+        body.productDescription = extra.productSection.description;
+      }
     }
 
     body.contentJson = JSON.stringify(extra);
