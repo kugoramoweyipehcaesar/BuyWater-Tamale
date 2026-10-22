@@ -37,12 +37,14 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false);
   const [complaint, setComplaint] = useState("");
   const [sendingComplaint, setSendingComplaint] = useState(false);
+  const [myComplaints, setMyComplaints] = useState([]);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/auth/me").then((r) => r.json()),
       fetch("/api/hostels").then((r) => r.json()),
-    ]).then(([me, hos]) => {
+      fetch("/api/feedback").then((r) => r.json()).catch(() => ({ complaints: [] })),
+    ]).then(([me, hos, fb]) => {
       if (!me.user) {
         router.push("/login");
         return;
@@ -56,6 +58,9 @@ export default function ProfilePage() {
         customHostel: me.user.customHostel || "",
       });
       setHostels(hos.hostels || []);
+      if (fb && Array.isArray(fb.complaints)) {
+        setMyComplaints(fb.complaints);
+      }
     });
   }, [router]);
 
@@ -100,6 +105,14 @@ export default function ProfilePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
       setComplaint("");
+      if (data.complaint) {
+        setMyComplaints((list) => [data.complaint, ...list]);
+      } else {
+        fetch("/api/feedback")
+          .then((r) => r.json())
+          .then((fb) => setMyComplaints(fb.complaints || []))
+          .catch(() => {});
+      }
       toast("Complaint sent to admins");
     } catch (e) {
       toast(e.message || "Failed", false);
@@ -295,11 +308,7 @@ export default function ProfilePage() {
           {!edit ? (
             <div className="divide-y divide-slate-100 dark:divide-zinc-800">
               <Detail icon={Mail} label="Email" value={user.email} />
-              <Detail
-                icon={User}
-                label="Username"
-                value={user.username || "—"}
-              />
+              <Detail icon={User} label="Username" value={user.username || "—"} />
               <Detail icon={Phone} label="Phone" value={user.phone || "—"} />
               <Detail
                 icon={MapPin}
@@ -320,25 +329,11 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="space-y-3">
-              <Field
-                label="Full name"
-                value={form.name || ""}
-                onChange={(v) => setForm({ ...form, name: v })}
-              />
-              <Field
-                label="Username"
-                value={form.username || ""}
-                onChange={(v) => setForm({ ...form, username: v })}
-              />
-              <Field
-                label="Phone"
-                value={form.phone || ""}
-                onChange={(v) => setForm({ ...form, phone: v })}
-              />
+              <Field label="Full name" value={form.name || ""} onChange={(v) => setForm({ ...form, name: v })} />
+              <Field label="Username" value={form.username || ""} onChange={(v) => setForm({ ...form, username: v })} />
+              <Field label="Phone" value={form.phone || ""} onChange={(v) => setForm({ ...form, phone: v })} />
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-zinc-400">
-                  Hostel
-                </label>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-zinc-400">Hostel</label>
                 <select
                   value={form.hostel || ""}
                   onChange={(e) => setForm({ ...form, hostel: e.target.value })}
@@ -346,34 +341,19 @@ export default function ProfilePage() {
                 >
                   <option value="">Select hostel</option>
                   {hostels.map((h) => (
-                    <option key={h.id} value={h.name}>
-                      {h.name}
-                    </option>
+                    <option key={h.id} value={h.name}>{h.name}</option>
                   ))}
                   <option value="Other">Other</option>
                 </select>
               </div>
               {form.hostel === "Other" && (
-                <Field
-                  label="Hostel name"
-                  value={form.customHostel || ""}
-                  onChange={(v) => setForm({ ...form, customHostel: v })}
-                />
+                <Field label="Hostel name" value={form.customHostel || ""} onChange={(v) => setForm({ ...form, customHostel: v })} />
               )}
               <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={save}
-                  className="flex-1 rounded-xl bg-[#0077C8] py-2.5 text-sm font-semibold text-white disabled:opacity-50 dark:bg-sky-500"
-                >
+                <button type="button" disabled={saving} onClick={save} className="flex-1 rounded-xl bg-[#0077C8] py-2.5 text-sm font-semibold text-white disabled:opacity-50 dark:bg-sky-500">
                   {saving ? "Saving…" : "Save"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setEdit(false)}
-                  className="rounded-xl border px-4 py-2.5 text-sm font-semibold dark:border-zinc-700"
-                >
+                <button type="button" onClick={() => setEdit(false)} className="rounded-xl border px-4 py-2.5 text-sm font-semibold dark:border-zinc-700">
                   Cancel
                 </button>
               </div>
@@ -414,6 +394,54 @@ export default function ProfilePage() {
                 "Send to admins"
               )}
             </button>
+
+            {myComplaints.length > 0 && (
+              <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 dark:border-zinc-800">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Your complaints &amp; admin replies
+                </p>
+                {myComplaints.map((c) => (
+                  <div
+                    key={c.id}
+                    className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-950"
+                  >
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-slate-400">
+                        {c.createdAt ? new Date(c.createdAt).toLocaleString() : ""}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          c.status === "open"
+                            ? "bg-amber-100 text-amber-800"
+                            : c.status === "responded"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-slate-200 text-slate-600"
+                        }`}
+                      >
+                        {c.status || "open"}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm text-slate-800 dark:text-zinc-200">
+                      {c.message}
+                    </p>
+                    {c.adminResponse ? (
+                      <div className="mt-2 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-2 dark:border-blue-900 dark:bg-blue-950/40">
+                        <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                          Admin response
+                        </p>
+                        <p className="mt-0.5 whitespace-pre-wrap text-sm text-blue-900 dark:text-blue-100">
+                          {c.adminResponse}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-slate-400">
+                        Awaiting admin response…
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -422,12 +450,8 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2">
               <Moon className="h-4 w-4 text-slate-500 dark:text-zinc-400" />
               <div>
-                <p className="text-sm font-semibold text-[#0B2545] dark:text-zinc-100">
-                  Appearance
-                </p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">
-                  Light / Dark theme
-                </p>
+                <p className="text-sm font-semibold text-[#0B2545] dark:text-zinc-100">Appearance</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">Light / Dark theme</p>
               </div>
             </div>
             <ThemeToggle />
@@ -451,9 +475,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-4 rounded-2xl border border-red-200 bg-white p-4 dark:border-red-900 dark:bg-zinc-900">
-          <p className="mb-2 text-sm font-bold text-red-700 dark:text-red-400">
-            Danger Zone
-          </p>
+          <p className="mb-2 text-sm font-bold text-red-700 dark:text-red-400">Danger Zone</p>
           <button
             type="button"
             onClick={() => setShowDelete(true)}
@@ -475,9 +497,7 @@ function Detail({ icon: Icon, label, value }) {
       </div>
       <div className="min-w-0">
         <p className="text-[11px] text-slate-400 dark:text-zinc-500">{label}</p>
-        <p className="truncate text-sm font-semibold text-[#0B2545] dark:text-zinc-100">
-          {value}
-        </p>
+        <p className="truncate text-sm font-semibold text-[#0B2545] dark:text-zinc-100">{value}</p>
       </div>
     </div>
   );
@@ -486,9 +506,7 @@ function Detail({ icon: Icon, label, value }) {
 function Field({ label, value, onChange }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-zinc-400">
-        {label}
-      </label>
+      <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-zinc-400">{label}</label>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
