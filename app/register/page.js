@@ -30,6 +30,30 @@ export default function RegisterPage() {
   const [showPw2, setShowPw2] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [helpPhone, setHelpPhone] = useState("0531448824");
+
+  useEffect(() => {
+    fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d.settings || {};
+        const phone =
+          s.whatsappNumber ||
+          s.adminPhone ||
+          s.callNumber1 ||
+          "0531448824";
+        if (phone) setHelpPhone(String(phone).trim());
+      })
+      .catch(() => {});
+  }, []);
+
+  function toWaDigits(phone) {
+    let d = String(phone || "").replace(/\D/g, "");
+    if (!d) return "";
+    if (d.startsWith("0")) d = "233" + d.slice(1);
+    if (d.length === 9 && !d.startsWith("233")) d = "233" + d;
+    return d;
+  }
 
   useEffect(() => {
     fetch("/api/hostels")
@@ -242,10 +266,22 @@ export default function RegisterPage() {
           </button>
 
           <p className="text-center text-xs text-slate-400">
-            By signing up, you agree to our Terms &amp; Privacy Policy
+            By signing up, you agree to our Terms & Privacy Policy
           </p>
         </form>
       </div>
+
+      <p className="mt-4 text-center text-sm text-slate-500">
+        Need help?{" "}
+        <a
+          href={toWaDigits(helpPhone) ? `https://wa.me/${toWaDigits(helpPhone)}` : "#"}
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-[#0077C8] hover:underline"
+        >
+          WhatsApp {helpPhone}
+        </a>
+      </p>
 
       <p className="mt-6 text-sm text-slate-600">
         Already have an account?{" "}
