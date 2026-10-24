@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, Loader2, Check } from "lucide-react";
 
 export default function LoginPage() {
@@ -10,10 +10,33 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  const [remember, setRemember] = useState(true);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [helpPhone, setHelpPhone] = useState("0531448824");
+
+  useEffect(() => {
+    fetch(`/api/settings?t=${Date.now()}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d.settings || {};
+        const phone =
+          s.whatsappNumber ||
+          s.adminPhone ||
+          s.callNumber1 ||
+          "0531448824";
+        if (phone) setHelpPhone(String(phone).trim());
+      })
+      .catch(() => {});
+  }, []);
+
+  function toWaDigits(phone) {
+    let d = String(phone || "").replace(/\D/g, "");
+    if (!d) return "";
+    if (d.startsWith("0")) d = "233" + d.slice(1);
+    if (d.length === 9 && !d.startsWith("233")) d = "233" + d;
+    return d;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -30,8 +53,6 @@ export default function LoginPage() {
         setError(data.error || "Login failed");
         return;
       }
-
-      // Show "Login successful" top-left for 2 seconds, then redirect
       setLoginSuccess(true);
       const dest =
         data.user?.role === "ADMIN" || data.user?.role === "SUPER_ADMIN"
@@ -100,9 +121,17 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#0B2545]">
-              Password
-            </label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="block text-sm font-medium text-[#0B2545]">
+                Password
+              </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-[#0077C8] hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -116,35 +145,11 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
               >
                 {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex cursor-pointer items-center gap-2 text-slate-600">
-              <span
-                role="checkbox"
-                aria-checked={remember}
-                className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                  remember
-                    ? "border-[#0077C8] bg-[#0077C8] text-white"
-                    : "border-slate-300"
-                }`}
-                onClick={() => setRemember(!remember)}
-              >
-                {remember && <Check className="h-3 w-3" />}
-              </span>
-              Remember me
-            </label>
-            <Link
-              href="/forgot-password"
-              className="font-medium text-[#0077C8] hover:underline"
-            >
-              Forgot Password?
-            </Link>
           </div>
 
           <button
@@ -165,18 +170,18 @@ export default function LoginPage() {
         <p className="text-center text-sm text-slate-500">
           Need help?{" "}
           <a
-            href="https://wa.me/233531448824"
+            href={toWaDigits(helpPhone) ? `https://wa.me/${toWaDigits(helpPhone)}` : "#"}
             target="_blank"
             rel="noreferrer"
             className="font-medium text-[#0077C8] hover:underline"
           >
-            WhatsApp 0531448824
+            WhatsApp {helpPhone}
           </a>
         </p>
       </div>
 
       <p className="mt-6 text-sm text-slate-600">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <Link href="/register" className="font-semibold text-[#0077C8] hover:underline">
           Sign Up
         </Link>
